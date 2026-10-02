@@ -1,0 +1,29 @@
+name: AI rights request
+description: Request model-training, dataset, fine-tuning, or other model-improvement rights.
+title: "AI rights request: "
+labels: [ai-rights]
+body:
+  - type: input
+    id: entity
+    attributes:
+      label: Requesting person or entity
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Covered project/source
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Requested AI scope
+      description: Models, datasets, training/fine-tuning purpose, retention, downstream distribution, and commercial use.
+    validations:
+      required: true
+  - type: textarea
+    id: consideration
+    attributes:
+      label: Proposed consideration
+      description: Fee, revenue share, compute, API/model access, reciprocal rights, research collaboration, or other value.

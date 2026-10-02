@@ -1,0 +1,33 @@
+name: Register Kiyoshima Source adoption
+description: Register a public project using an exact Kiyoshima Source license version.
+title: "Adoption: "
+labels: [adoption]
+body:
+  - type: input
+    id: repo
+    attributes:
+      label: Repository
+      description: Canonical public repository URL
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: License version
+      value: Kiyoshima Source 1.0
+    validations:
+      required: true
+  - type: input
+    id: passport
+    attributes:
+      label: License Passport
+      description: URL to KIYOSHIMA.json
+    validations:
+      required: true
+  - type: checkboxes
+    id: exact
+    attributes:
+      label: Declaration
+      options:
+        - label: I am authorized to license this project and I used the official license text without modification.
+          required: true

@@ -1,0 +1,45 @@
+{
+  "format": "Kiyoshima License Passport",
+  "schema_version": "1.0",
+  "project": {
+    "name": "Kiyoshima Licensing Framework",
+    "kind": "licensing-framework"
+  },
+  "profile": "source",
+  "license": {
+    "name": "Kiyoshima Source License 1.0",
+    "canonical_id": "Kiyoshima-Source-1.0",
+    "spdx_expression": "LicenseRef-Kiyoshima-Source-1.0",
+    "version": "1.0",
+    "authoritative_file": "LICENSES/LicenseRef-Kiyoshima-Source-1.0.txt",
+    "legal_priority": "license-text-controls",
+    "sha256": "1d0786b25881309c89f2d1e3b8a8de93fce433d975b6b8028acf58e6b678eb01"
+  },
+  "permissions": {
+    "individual_personal_use": "allowed",
+    "individual_freelance_tool_use": "allowed",
+    "qualifying_education": "allowed",
+    "qualifying_research": "allowed",
+    "noncommercial_modified_distribution": "allowed-with-conditions",
+    "organization_use": "agreement-required",
+    "commercial_distribution": "agreement-required",
+    "hosted_commercial_use": "agreement-required"
+  },
+  "ai": {
+    "agentic_operational_use": "allowed-within-principal-rights",
+    "coding_assistant_use": "allowed-within-principal-rights",
+    "temporary_rag": "allowed-within-principal-rights",
+    "model_training": "permission-required",
+    "fine_tuning": "permission-required",
+    "continued_pretraining": "permission-required",
+    "dataset_creation": "permission-required",
+    "synthetic_training_data": "permission-required",
+    "model_improvement": "permission-required"
+  },
+  "automation": {
+    "conflict_policy": "deny-on-conflict",
+    "missing_field_policy": "do-not-infer-rights",
+    "machine_metadata_authority": "informational",
+    "additional_permissions_require_authenticated_grant": true
+  }
+}

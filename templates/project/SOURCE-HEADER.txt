@@ -1,0 +1,2 @@
+SPDX-FileCopyrightText: © YEAR COPYRIGHT_HOLDER
+SPDX-License-Identifier: LicenseRef-Kiyoshima-Source-1.0

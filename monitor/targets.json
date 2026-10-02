@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "queries": [
+    {
+      "name": "Kiyoshima Source identifier adoption",
+      "query": "\"LicenseRef-Kiyoshima-Source-1.0\""
+    },
+    {
+      "name": "Kiyoshima Source name adoption",
+      "query": "\"Kiyoshima Source License\""
+    }
+  ],
+  "project_queries": []
+}

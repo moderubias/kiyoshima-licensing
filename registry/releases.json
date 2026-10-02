@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "entries": [
+    {
+      "name": "Kiyoshima Source License 1.0",
+      "canonical_id": "Kiyoshima-Source-1.0",
+      "spdx_reference": "LicenseRef-Kiyoshima-Source-1.0",
+      "status": "draft-candidate",
+      "sha256": "1d0786b25881309c89f2d1e3b8a8de93fce433d975b6b8028acf58e6b678eb01",
+      "file": "LICENSES/LicenseRef-Kiyoshima-Source-1.0.txt"
+    }
+  ]
+}

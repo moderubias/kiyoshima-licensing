@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:kiyoshima:schema:rights-grant:1.0",
+  "title": "Kiyoshima Rights Grant Record",
+  "type": "object",
+  "required": ["format", "schema_version", "grant_id", "issuer", "grantee", "scope", "rights", "authentication"],
+  "properties": {
+    "format": {"const": "Kiyoshima Rights Grant"},
+    "schema_version": {"const": "1.0"},
+    "grant_id": {"type": "string", "pattern": "^KRG-[0-9]{4}-[A-Za-z0-9._-]+$"},
+    "issuer": {"type": "object"},
+    "grantee": {"type": "object", "minProperties": 1},
+    "scope": {"type": "object"},
+    "rights": {"type": "object", "additionalProperties": {"type": "boolean"}},
+    "conditions": {"type": "array", "items": {"type": "string"}},
+    "authentication": {
+      "type": "object",
+      "required": ["document_sha256"],
+      "properties": {
+        "document_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "signature_type": {"type": "string"},
+        "signature_reference": {"type": "string"}
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,7 @@
+kiyoshima-watch.json
+kiyoshima-fingerprint.json
+*.tmp
+*.env*
+.env
+.DS_Store
+.venv/

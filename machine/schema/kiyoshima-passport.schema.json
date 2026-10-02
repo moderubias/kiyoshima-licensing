@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:kiyoshima:schema:license-passport:1.0",
+  "title": "Kiyoshima License Passport",
+  "type": "object",
+  "required": [
+    "format",
+    "schema_version",
+    "project",
+    "profile",
+    "license",
+    "permissions",
+    "ai",
+    "automation"
+  ],
+  "properties": {
+    "format": {
+      "const": "Kiyoshima License Passport"
+    },
+    "schema_version": {
+      "const": "1.0"
+    },
+    "project": {
+      "type": "object",
+      "required": [
+        "name",
+        "kind"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string"
+        },
+        "copyright_holder": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "profile": {
+      "enum": [
+        "open",
+        "source",
+        "commercial",
+        "framework"
+      ]
+    },
+    "license": {
+      "type": "object",
+      "required": [
+        "name",
+        "canonical_id",
+        "spdx_expression",
+        "version",
+        "authoritative_file",
+        "legal_priority",
+        "sha256"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "canonical_id": {
+          "type": "string"
+        },
+        "spdx_expression": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "authoritative_file": {
+          "type": "string"
+        },
+        "legal_priority": {
+          "const": "license-text-controls"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        }
+      },
+      "additionalProperties": true
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "ai": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "boolean"
+        ]
+      }
+    },
+    "automation": {
+      "type": "object",
+      "required": [
+        "conflict_policy",
+        "missing_field_policy",
+        "machine_metadata_authority",
+        "additional_permissions_require_authenticated_grant"
+      ],
+      "properties": {
+        "conflict_policy": {
+          "const": "deny-on-conflict"
+        },
+        "missing_field_policy": {
+          "const": "do-not-infer-rights"
+        },
+        "machine_metadata_authority": {
+          "const": "informational"
+        },
+        "additional_permissions_require_authenticated_grant": {
+          "const": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "grants": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

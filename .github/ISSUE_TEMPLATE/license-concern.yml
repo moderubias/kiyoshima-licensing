@@ -1,0 +1,24 @@
+name: Report a licensing concern
+description: Report a possible unlicensed use or confusing license representation.
+title: "License concern: "
+labels: [license-review]
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Source URL
+    validations:
+      required: true
+  - type: input
+    id: project
+    attributes:
+      label: Affected project
+    validations:
+      required: true
+  - type: textarea
+    id: facts
+    attributes:
+      label: Observable facts
+      description: Provide links, commit IDs, files, dates, and what appears to match. Avoid conclusions about liability.
+    validations:
+      required: true

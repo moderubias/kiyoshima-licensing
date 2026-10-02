@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = ["**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "REPLACE_WITH_COPYRIGHT_NOTICE"
+SPDX-License-Identifier = "LicenseRef-Kiyoshima-Source-1.0"

@@ -1,0 +1,40 @@
+name: Release framework with provenance
+
+on:
+  push:
+    tags:
+      - 'framework-v*'
+      - 'source-v*'
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Verify framework
+        run: python tools/klicense.py verify-framework
+      - name: Package canonical release
+        run: |
+          mkdir -p dist
+          git archive --format=tar.gz --prefix=kiyoshima-licensing-framework/ -o "dist/kiyoshima-licensing-framework-${GITHUB_REF_NAME}.tar.gz" HEAD
+          git archive --format=zip --prefix=kiyoshima-licensing-framework/ -o "dist/kiyoshima-licensing-framework-${GITHUB_REF_NAME}.zip" HEAD
+      - name: Attest release archives
+        uses: actions/attest@v4
+        with:
+          subject-path: 'dist/*'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kiyoshima-framework-${{ github.ref_name }}
+          path: dist/*
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes --title "$GITHUB_REF_NAME"

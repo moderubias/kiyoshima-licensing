@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:kiyoshima:schema:registry:1.0",
+  "title": "Kiyoshima Registry",
+  "type": "object",
+  "required": ["schema_version", "entries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "entries": {"type": "array", "items": {"type": "object"}}
+  }
+}

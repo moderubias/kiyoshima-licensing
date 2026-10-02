@@ -1,0 +1,29 @@
+name: License watch
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 5 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Search public GitHub code
+        env:
+          KIYOSHIMA_MONITOR_TOKEN: ${{ secrets.KIYOSHIMA_MONITOR_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/klicense.py monitor --output kiyoshima-watch.json --allow-no-token
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kiyoshima-license-watch
+          path: kiyoshima-watch.json
+          if-no-files-found: ignore
+          retention-days: 30

@@ -1,0 +1,30 @@
+name: Commercial or organizational license request
+description: Start a licensing discussion for organizational, commercial, SaaS, or distribution rights.
+title: "Commercial request: "
+labels: [commercial]
+body:
+  - type: input
+    id: organization
+    attributes:
+      label: Organization
+    validations:
+      required: true
+  - type: input
+    id: project
+    attributes:
+      label: Kiyoshima-licensed project
+    validations:
+      required: true
+  - type: textarea
+    id: use
+    attributes:
+      label: Intended use
+      description: Describe deployment, distribution, SaaS, product integration, users/seats, and expected term.
+    validations:
+      required: true
+  - type: input
+    id: contact
+    attributes:
+      label: Contact route
+    validations:
+      required: true
