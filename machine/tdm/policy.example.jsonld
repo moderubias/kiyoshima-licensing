@@ -1,0 +1,32 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/odrl.jsonld",
+    "http://www.w3.org/ns/tdmrep.jsonld"
+  ],
+  "uid": "https://REPLACE_WITH_CONTROLLED_ORIGIN.example/policies/kiyoshima-tdm",
+  "@type": "Offer",
+  "profile": "http://www.w3.org/ns/tdmrep",
+  "assigner": {
+    "uid": "https://REPLACE_WITH_CONTROLLED_ORIGIN.example/",
+    "vcard:fn": "REPLACE_WITH_RIGHTSHOLDER",
+    "vcard:hasURL": "https://REPLACE_WITH_CONTROLLED_ORIGIN.example/licensing"
+  },
+  "permission": [
+    {
+      "target": "https://REPLACE_WITH_CONTROLLED_ORIGIN.example/covered-content",
+      "action": "tdm:mine",
+      "duty": [
+        {
+          "action": "obtainConsent"
+        }
+      ],
+      "constraint": [
+        {
+          "leftOperand": "purpose",
+          "operator": "eq",
+          "rightOperand": "tdm:non-research"
+        }
+      ]
+    }
+  ]
+}

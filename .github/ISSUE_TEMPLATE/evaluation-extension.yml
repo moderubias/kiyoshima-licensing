@@ -1,0 +1,24 @@
+name: Organization evaluation extension
+description: Request additional non-production evaluation time before a commercial decision.
+title: "Evaluation extension: "
+labels: [evaluation]
+body:
+  - type: input
+    id: organization
+    attributes:
+      label: Organization
+    validations:
+      required: true
+  - type: input
+    id: project
+    attributes:
+      label: Kiyoshima-licensed project
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Evaluation scope and requested extension
+      description: Describe the non-production evaluation, expected duration, and why additional time is needed.
+    validations:
+      required: true

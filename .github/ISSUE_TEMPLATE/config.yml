@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security issue
+    url: https://github.com/moderubias/kiyoshima-licensing/security
+    about: Use GitHub private security reporting when enabled; do not publish secrets or private agreements.

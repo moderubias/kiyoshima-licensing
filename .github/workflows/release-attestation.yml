@@ -15,10 +15,15 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: '3.13'
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.14'
+      - name: Reject candidate/incomplete release state
+        run: python tools/klicense.py release-check
       - name: Verify framework
         run: python tools/klicense.py verify-framework
       - name: Package canonical release
@@ -26,11 +31,12 @@ jobs:
           mkdir -p dist
           git archive --format=tar.gz --prefix=kiyoshima-licensing-framework/ -o "dist/kiyoshima-licensing-framework-${GITHUB_REF_NAME}.tar.gz" HEAD
           git archive --format=zip --prefix=kiyoshima-licensing-framework/ -o "dist/kiyoshima-licensing-framework-${GITHUB_REF_NAME}.zip" HEAD
+          sha256sum dist/* > dist/SHA256SUMS
       - name: Attest release archives
-        uses: actions/attest@v4
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: 'dist/*'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: kiyoshima-framework-${{ github.ref_name }}
           path: dist/*

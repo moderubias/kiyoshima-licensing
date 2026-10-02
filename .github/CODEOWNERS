@@ -1,0 +1,6 @@
+# Canonical legal and release surfaces require steward review.
+/LICENSE-KIYOSHIMA-SOURCE-1.0.txt @moderubias
+/registry/releases.json @moderubias
+/.github/workflows/release-attestation.yml @moderubias
+/GOVERNANCE.md @moderubias
+/TRADEMARKS.md @moderubias

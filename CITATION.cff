@@ -1,15 +1,17 @@
 cff-version: 1.2.0
 message: "If you reference the Kiyoshima Licensing Framework in research or documentation, cite this release."
 title: "Kiyoshima Licensing Framework"
-version: "1.0.0"
+version: "1.1.0-rc2"
 type: software
 authors:
   - family-names: "Kiyoshima"
     given-names: "Akayo"
-abstract: "A source-available licensing framework combining stable legal text with machine-readable policy, AI-use semantics, permission grants, integrity metadata, and adoption tooling."
+abstract: "A machine-readable source-available licensing framework combining stable legal text, AI/TDM rights semantics, authenticated permission paths, provenance, integrity validation, and adoption tooling."
 keywords:
   - software licensing
   - source available
   - machine readable policy
   - AI licensing
-license: "LicenseRef-Kiyoshima-Source-1.0"
+  - text and data mining
+  - provenance
+license: "Apache-2.0"

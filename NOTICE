@@ -1,9 +1,12 @@
 Kiyoshima Licensing Framework
 License Steward: Akayo Kiyoshima
-Framework Version: 1.0.0
+Framework Release Candidate: 1.1.0-rc2
 
-Canonical license name: Kiyoshima Source License 1.0
+Repository tooling/documentation license: Apache-2.0
+Canonical source-available instrument: Kiyoshima Source License 1.0
+Current candidate revision: rc.3
+Current candidate SHA-256: c3c5a834df1b0ef65b076aa4c8a233be1a17005016f60f6978a44ce0a17a6c85
 Canonical identifier: Kiyoshima-Source-1.0
 SPDX reference identifier: LicenseRef-Kiyoshima-Source-1.0
 
-The Kiyoshima names and project identities are not granted for misleading or confusing use by the software license itself. Exact unmodified copies of the license may be applied to third-party software as described in Section 21 of the license.
+Exact, unmodified copies of Kiyoshima Source License 1.0 may be applied to third-party software under Section 22 of that license. Kiyoshima names and marks may be used truthfully for attribution and identification but not to imply endorsement or official status for modified license text.

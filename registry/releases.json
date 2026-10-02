@@ -1,13 +1,15 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
+  "registry_kind": "releases",
   "entries": [
     {
       "name": "Kiyoshima Source License 1.0",
       "canonical_id": "Kiyoshima-Source-1.0",
       "spdx_reference": "LicenseRef-Kiyoshima-Source-1.0",
-      "status": "draft-candidate",
-      "sha256": "1d0786b25881309c89f2d1e3b8a8de93fce433d975b6b8028acf58e6b678eb01",
-      "file": "LICENSES/LicenseRef-Kiyoshima-Source-1.0.txt"
+      "status": "release-candidate",
+      "sha256": "c3c5a834df1b0ef65b076aa4c8a233be1a17005016f60f6978a44ce0a17a6c85",
+      "file": "LICENSE-KIYOSHIMA-SOURCE-1.0.txt",
+      "candidate_revision": "rc.3"
     }
   ]
 }

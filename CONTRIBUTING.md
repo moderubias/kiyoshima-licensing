@@ -4,12 +4,16 @@ Changes to legal text are treated differently from ordinary documentation or too
 
 ## Legal text
 
-Do not submit silent edits to a released license version. A legal-text change must target a new proposed version and explain the semantic effect.
+Do not submit silent edits to a released legal version. Before 1.0 is frozen, proposed changes must explain their semantic effect. After `source-v1.0`, any legal-text change targets a new legal version.
 
-## Tooling and metadata
+## Tooling, protocol, and metadata
 
-Tooling, schemas, documentation, and registry improvements are welcome when they preserve the conservative machine-policy rule.
+Tooling, schemas, documentation, and registry improvements are welcome when they preserve the conservative machine-policy rule: metadata may restrict or explain, but unauthenticated metadata never creates rights beyond the legal instrument.
 
 ## Contributor rights
 
-Material contributions may require acceptance of Kiyoshima Contributor Agreement 1.0 so that the framework and projects using it can preserve relicensing flexibility.
+Material contributions may require acceptance of Kiyoshima Contributor Agreement 1.0 so projects can preserve public/commercial relicensing flexibility. Acceptance records should be attributable and durable.
+
+## Security-sensitive changes
+
+Changes to release workflows, integrity validation, signing/attestation behavior, or canonical digests should receive explicit review and must pass `python tools/klicense.py verify-framework` and the test suite.

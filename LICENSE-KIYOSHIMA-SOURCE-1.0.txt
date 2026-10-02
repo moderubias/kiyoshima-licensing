@@ -1,5 +1,6 @@
 Kiyoshima Source License
-Version 1.0
+Version 1.0 — Release Candidate
+Candidate Revision: rc.3
 Canonical Identifier: Kiyoshima-Source-1.0
 SPDX Reference Identifier: LicenseRef-Kiyoshima-Source-1.0
 
@@ -7,7 +8,7 @@ Copyright notice for the Covered Software is supplied by the applicable Licensor
 
 0. Purpose
 
-This License is intended to keep Covered Software broadly usable by natural persons for personal work, independent professional work, learning, and qualifying research, while reserving organizational use, commercial distribution, hosted commercial exploitation, and model-improvement use for separate permission.
+This License is intended to keep Covered Software broadly usable by natural persons for personal work, independent professional work, learning, and qualifying research, while reserving organizational production use, commercial distribution, hosted commercial exploitation, and model-improvement use for separate permission.
 
 This License is source-available and is not an Open Source Initiative approved open-source license.
 
@@ -27,13 +28,15 @@ This License is source-available and is not an Open Source Initiative approved o
 
 "Qualifying Research Use" means non-commercial academic, scientific, or public-interest research by an Individual, university, public research institution, or non-profit research institution. Research performed by or for a commercial Organization is not Qualifying Research Use unless the Licensor separately permits it.
 
+"Organization Evaluation Use" means internal, non-production access, copying, compilation, execution, testing, benchmarking, security review, and modification by an Organization solely to determine whether to obtain additional rights for Covered Software. It excludes production deployment, ordinary business operations, customer-facing use, Distribution, Hosted Commercial Use, Model Improvement Use, and use of Covered Software as a substitute for obtaining a commercial license. The evaluation period is thirty (30) calendar days beginning on the Organization's first execution of Covered Software from the applicable project. Updates, patches, forks, or materially equivalent successor builds do not restart that period unless the Licensor grants a new or extended evaluation period in writing.
+
 "Distribution" means providing a copy of Covered Software or a modified version to another person or entity, whether by source, binary, package, download, physical media, bundled product, or other transfer.
 
-"Commercial Distribution" means Distribution for payment, subscription, license fee, access fee, bundled commercial consideration, or other direct or indirect commercial consideration, including selling a product whose material value includes Covered Software.
+"Commercial Distribution" means Distribution for payment, subscription, license fee, access fee, bundled commercial consideration, advertising-supported consideration materially tied to the distributed product, or other direct or indirect commercial consideration, including selling a product whose material value includes Covered Software.
 
 "Hosted Commercial Use" means making Covered Software or a modified version available as a hosted, networked, cloud, API, SaaS, managed, or remotely accessed product or service in return for direct or indirect commercial consideration.
 
-"Model Improvement Use" means using Covered Software, or representations materially derived from it, to train, fine-tune, continue pretraining, optimize, evaluate for model improvement, construct a training dataset, generate synthetic training data, or otherwise improve model weights or a reusable machine-learning model or dataset.
+"Model Improvement Use" means using Covered Software, or representations materially derived from it, to train, fine-tune, continue pretraining, optimize, select, or evaluate reusable model weights for improvement; construct a reusable training dataset; generate synthetic training data; or otherwise improve a reusable machine-learning model or dataset.
 
 "Operational AI Use" means temporary or task-scoped use of an AI system, coding assistant, agent, retrieval system, embedding index, or automated tool solely to exercise rights that You already have under this License, without Model Improvement Use.
 
@@ -44,29 +47,40 @@ This License is source-available and is not an Open Source Initiative approved o
 Subject to the conditions of this License, the Licensor grants an Individual a worldwide, royalty-free, non-exclusive, non-transferable, non-sublicensable license to:
 
 (a) access, inspect, copy, download, clone, fork, compile, execute, and test Covered Software;
-(b) modify Covered Software for personal use;
-(c) use Covered Software as a tool in the Individual's independent professional or freelance work, provided the Covered Software itself is not Commercially Distributed or offered through Hosted Commercial Use;
+(b) modify Covered Software for any use otherwise permitted to that Individual under this License;
+(c) use Covered Software, including the Individual's permitted modifications, as a tool in the Individual's independent professional or freelance work, provided the Covered Software itself is not Commercially Distributed, transferred to the client as part of a deliverable, or offered through Hosted Commercial Use;
 (d) conduct Qualifying Educational Use;
-(e) conduct Qualifying Research Use; and
-(f) distribute non-commercial modified versions only in compliance with Section 5.
+(e) conduct Qualifying Research Use;
+(f) distribute unmodified copies non-commercially while preserving this License and supplied notices; and
+(g) distribute non-commercial modified versions only in compliance with Section 6.
 
 3. Educational and Research Grant
 
 Qualifying Educational Use and Qualifying Research Use are permitted royalty-free, including reasonable modification, benchmarking, reproducibility work, publication of research results, classroom use, thesis and dissertation work, and disclosure of modifications needed to explain or reproduce the work.
 
+A school, university, public educational institution, or non-profit educational/research institution acting solely within Qualifying Educational Use or Qualifying Research Use may non-commercially share unmodified copies and may distribute modified source needed for teaching, research, publication, or reproducibility subject to Section 6.
+
 This Section does not authorize a commercial Organization to characterize internal R&D, product development, employee training, customer training, or commercial research services as Qualifying Educational Use or Qualifying Research Use.
 
-4. Organization and Commercial Restrictions
+4. Limited Organization Evaluation
 
-Except when acting solely within Qualifying Educational Use or Qualifying Research Use under Section 3, and unless an Additional Permission or separate commercial agreement expressly states otherwise, an Organization may not use, execute, copy, modify, deploy, evaluate for production adoption, distribute, integrate, host, or otherwise exploit Covered Software.
+An Organization may conduct Organization Evaluation Use without a separate commercial agreement during the evaluation period defined in Section 1.
+
+Evaluation may include technical due diligence, dependency review, security analysis, compatibility testing, benchmarks, proof-of-concept integration in an isolated non-production environment, and internal procurement review.
+
+Organization Evaluation Use does not authorize production use, ordinary internal operational use, customer or public access, commercial delivery, redistribution, Hosted Commercial Use, Model Improvement Use, or use after the evaluation period. The Licensor may extend evaluation in writing without issuing a full commercial license.
+
+5. Organization and Commercial Restrictions
+
+Except for Organization Evaluation Use under Section 4, Qualifying Educational Use, Qualifying Research Use, or rights expressly granted by an Additional Permission or separate commercial agreement, an Organization may not use, execute, copy, modify, deploy, distribute, integrate, host, or otherwise exploit Covered Software.
 
 Commercial Distribution and Hosted Commercial Use are not permitted under this License, whether performed by an Individual or an Organization.
 
 An Individual's use of Covered Software as a tool to perform independent work is not prohibited merely because the Individual is paid for that work, provided the Covered Software is not itself transferred to the client, embedded in a client deliverable, sublicensed, sold, or operated as the paid product or service.
 
-5. Conditions on Non-Commercial Distribution
+6. Conditions on Non-Commercial Distribution
 
-An Individual who distributes a permitted non-commercial modified version must:
+An Individual, or an educational/research institution acting solely within Section 3, that distributes a permitted non-commercial modified version must:
 
 (a) preserve this License and all copyright, attribution, authorship, provenance, and license notices supplied with the Covered Software;
 (b) identify the original project and, when reasonably available, its canonical source repository;
@@ -78,41 +92,45 @@ An Individual who distributes a permitted non-commercial modified version must:
 
 This Section does not require unrelated code in a larger work to be licensed under this License solely because it interoperates with Covered Software. The Covered Software and modified portions derived from it remain subject to this License.
 
-6. AI Agents and Automated Tools
+A permitted distributor does not sublicense the Covered Software. Each recipient may exercise permissions directly from the applicable Licensor under this License to the extent the recipient independently qualifies for and accepts those permissions. A distributor may not represent that it can grant broader Kiyoshima Source rights than the Licensor has granted.
+
+7. AI Agents, Service Providers, and Automated Tools
 
 Operational AI Use is permitted to the same extent that the principal person or entity directing the automated system is permitted to perform the underlying activity.
 
-An AI agent, coding assistant, automated workflow, contractor, or other tool does not obtain independent rights. It may not expand the permissions of the person or entity on whose behalf it acts.
+An AI agent, coding assistant, automated workflow, contractor, processor, or other tool or service provider does not obtain independent rights. Its involvement may not expand the permissions of the person or entity on whose behalf it acts.
 
-You may provide Covered Software to an AI service for Operational AI Use only if doing so does not grant that service provider rights to perform Model Improvement Use beyond rights separately granted by the Licensor.
+You may provide Covered Software to an AI or automation service for Operational AI Use only to the extent reasonably necessary for the permitted task and only if Your arrangement with that service does not purport to grant Model Improvement Use or other reserved rights that You do not possess.
 
-7. Reserved AI and Dataset Rights
+8. Reserved AI, Dataset, and Text-and-Data-Mining Rights
 
 Model Improvement Use is reserved and is not licensed under this License.
 
-Without an Additional Permission specifically covering AI or dataset rights, You may not use Covered Software for model training, fine-tuning, continued pretraining, reusable dataset construction, commercial corpus construction, synthetic training-data generation, model-weight improvement, or sale or distribution of a dataset containing Covered Software or materially derived training representations.
+Without an Additional Permission specifically covering AI or dataset rights, You may not use Covered Software for model training, fine-tuning, continued pretraining, reusable dataset construction, commercial corpus construction, synthetic training-data generation, model-weight improvement, or sale or Distribution of a dataset containing Covered Software or materially derived training representations.
 
-Temporary embeddings, retrieval indexes, or context representations used solely for Operational AI Use are permitted if they are not retained or repurposed for Model Improvement Use.
+Temporary embeddings, retrieval indexes, or context representations used solely for Operational AI Use are permitted if they are not retained or repurposed for Model Improvement Use beyond what is reasonably necessary for the permitted task.
 
-8. Additional Permissions and Commercial Agreements
+To the extent applicable law permits a rightsholder to reserve rights for text and data mining or analogous automated analysis, the Licensor expressly reserves those rights for uses not already permitted by this License or mandatory law. Machine-readable metadata may communicate that reservation and a route for requesting permission, but does not alter mandatory exceptions or expand this License.
 
-The Licensor may grant additional rights by a separate written instrument, including a Kiyoshima Rights Grant, Kiyoshima Commercial Agreement, Kiyoshima AI Use Addendum, or another signed agreement.
+9. Additional Permissions and Commercial Agreements
+
+The Licensor may grant additional rights by a separate written instrument, including a Kiyoshima Rights Grant, Kiyoshima Commercial Agreement, Kiyoshima AI Use Addendum, or another authenticated agreement.
 
 An Additional Permission may identify a recipient by legal name, public account, verified organization identity, public-key fingerprint, or another method reasonably sufficient to identify the grantee.
 
-An Additional Permission is valid only to the extent issued or authenticated by the Licensor or its authorized successor. A third party may not create rights by editing, forking, or redistributing a permission document.
+An Additional Permission is valid only to the extent issued or authenticated by the Licensor or its authorized successor. A third party may not create rights by editing, forking, copying, or redistributing a permission document.
 
-9. Contributions
+10. Contributions
 
 Submitting a contribution does not by itself transfer copyright ownership. Projects accepting contributions may require a separate contributor agreement. Nothing in this License obligates a Licensor to accept contributions.
 
-10. Names, Marks, and Project Identity
+11. Names, Marks, and Project Identity
 
 No trademark, service mark, trade name, logo, product identity, domain name, or branding right is granted except as strictly necessary for truthful attribution.
 
 The names "Kiyoshima", "Kiyoshima Licensing Framework", "Kiyoshima Source License", and associated identifiers do not authorize a modified license text to be presented as an official Kiyoshima license.
 
-11. Limited Patent Grant
+12. Limited Patent Grant
 
 To the extent the Licensor controls patent claims that are necessarily infringed by exercising permissions expressly granted under this License, the Licensor grants You a worldwide, royalty-free, non-exclusive patent license solely to exercise those permissions for Covered Software. This patent license does not expand any copyright, organizational, commercial, distribution, hosted-service, AI, or other permission.
 
@@ -120,11 +138,11 @@ If You initiate patent litigation alleging that Covered Software or a contributi
 
 Additional patent rights may be granted by separate written agreement.
 
-12. Compliance with Law and Mandatory Rights
+13. Compliance with Law and Mandatory Rights
 
 This License does not restrict rights that applicable law makes non-waivable or permits regardless of license terms. You remain responsible for compliance with applicable law, including export, sanctions, privacy, data-protection, consumer, employment, and sector-specific requirements.
 
-13. Termination and Cure
+14. Termination and Cure
 
 If You violate this License, the permissions granted to You under this License terminate automatically.
 
@@ -134,11 +152,11 @@ Automatic reinstatement does not apply to a repeated violation, deliberate comme
 
 Termination does not limit claims or remedies arising from conduct that occurred before cure or reinstatement.
 
-14. Disclaimer of Warranty
+15. Disclaimer of Warranty
 
 TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE COVERED SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING WARRANTIES OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, SECURITY, OR ERROR-FREE OPERATION.
 
-15. Limitation of Liability
+16. Limitation of Liability
 
 TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSOR, AUTHORS, CONTRIBUTORS, AND AUTHORIZED DISTRIBUTORS WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR FOR LOSS OF PROFITS, REVENUE, DATA, GOODWILL, BUSINESS, OR OPPORTUNITY, ARISING FROM OR RELATED TO THE COVERED SOFTWARE OR THIS LICENSE, UNDER ANY THEORY OF LIABILITY.
 
@@ -146,40 +164,40 @@ FOR FREE USE UNDER THIS LICENSE, AND TO THE MAXIMUM EXTENT PERMITTED BY APPLICAB
 
 A SEPARATE COMMERCIAL AGREEMENT MAY PROVIDE DIFFERENT WARRANTIES, REMEDIES, OR LIABILITY LIMITS.
 
-16. Remedies and Enforcement
+17. Remedies and Enforcement
 
 The Licensor retains all remedies available under applicable law, which may include injunctive relief, damages, recovery or accounting of profits, platform or hosting-provider remedies, reasonable legal costs where recoverable, and other lawful relief. This License does not create a predetermined penalty or liquidated-damages amount.
 
-17. Versioning, Successors, and Assignment
+18. Versioning, Successors, and Assignment
 
 This License applies only in the version expressly identified for the Covered Software. Publication of a later version does not automatically relicense Covered Software under that later version.
 
 The Licensor may assign copyright and related licensing rights to a successor or assignee. A valid successor may exercise the Licensor's rights under this License and under separately issued grants to the extent those rights were assigned.
 
-18. Governing Law and Forum
+19. Governing Law and Forum
 
 This public License intentionally does not select an exclusive governing law, forum, or dispute-resolution mechanism. Those matters are determined by applicable law and conflict-of-laws rules unless a separate written agreement validly provides otherwise.
 
-19. Severability and No Waiver
+20. Severability and No Waiver
 
 If any provision of this License is held unenforceable, it will be enforced to the maximum extent permitted and the remaining provisions will continue in effect. Failure to enforce a provision is not a waiver of the right to enforce it later.
 
-20. Acceptance and Scope
+21. Acceptance and Scope
 
 You do not need to accept this License merely to receive or inspect a copy where applicable law independently permits that conduct. By exercising permissions that would otherwise require authorization from the Licensor, You accept and agree to comply with this License.
 
 No permission is granted by implication, estoppel, or silence beyond the permissions expressly stated here or required by applicable law.
 
-21. Use of the License Text by Other Developers
+22. Use of the License Text by Other Developers
 
 Any person may reproduce and apply an exact, unmodified copy of Kiyoshima Source License 1.0 to software for which that person has authority to license.
 
 If You modify this License text, You must not present the modified text as "Kiyoshima Source License", "Kiyoshima Source 1.0", "Kiyoshima-Source-1.0", "LicenseRef-Kiyoshima-Source-1.0", or as an official version of the Kiyoshima Licensing Framework. Modified license texts must use a clearly different name and identifier and must not create a likelihood of confusion as to source, stewardship, or compatibility.
 
-22. Human and Machine-Readable Metadata
+23. Human and Machine-Readable Metadata
 
-A KIYOSHIMA.json file, registry entry, badge, SPDX reference, REUSE metadata, or other machine-readable description may summarize the licensing state of Covered Software. Such metadata is informational unless a separate signed Additional Permission expressly states otherwise.
+A KIYOSHIMA.json file, registry entry, badge, SPDX reference, REUSE metadata, TDM reservation, or other machine-readable description may summarize the licensing state of Covered Software. Such metadata is informational unless a separate authenticated Additional Permission expressly states otherwise.
 
-If machine-readable metadata conflicts with this License, this License controls. Automated systems should resolve ambiguity conservatively and must not infer additional permissions from missing, malformed, or conflicting metadata.
+If machine-readable metadata conflicts with this License, this License controls. Automated systems should resolve ambiguity conservatively and must not infer additional permissions from missing, malformed, unauthenticated, or conflicting metadata.
 
 END OF KIYOSHIMA SOURCE LICENSE 1.0

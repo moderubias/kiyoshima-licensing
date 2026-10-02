@@ -1,0 +1,7 @@
+[
+  {
+    "location": "/",
+    "tdm-reservation": 1,
+    "tdm-policy": "https://REPLACE_WITH_CONTROLLED_ORIGIN.example/policies/kiyoshima-tdm.jsonld"
+  }
+]

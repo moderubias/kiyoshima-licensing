@@ -1,6 +1,8 @@
 {
+  "$schema": "https://raw.githubusercontent.com/moderubias/kiyoshima-licensing/main/machine/schema/kiyoshima-passport.schema.json",
   "format": "Kiyoshima License Passport",
-  "schema_version": "1.0",
+  "schema_version": "1.2",
+  "declaration_scope": "covered-software",
   "project": {
     "name": "REPLACE_WITH_PROJECT_NAME",
     "kind": "application",
@@ -14,17 +16,20 @@
     "canonical_id": "Kiyoshima-Source-1.0",
     "spdx_expression": "LicenseRef-Kiyoshima-Source-1.0",
     "version": "1.0",
+    "status": "release-candidate",
     "authoritative_file": "LICENSE",
     "legal_priority": "license-text-controls",
-    "sha256": "1d0786b25881309c89f2d1e3b8a8de93fce433d975b6b8028acf58e6b678eb01"
+    "sha256": "c3c5a834df1b0ef65b076aa4c8a233be1a17005016f60f6978a44ce0a17a6c85",
+    "candidate_revision": "rc.3"
   },
   "permissions": {
     "individual_personal_use": "allowed",
     "individual_freelance_tool_use": "allowed",
     "qualifying_education": "allowed",
     "qualifying_research": "allowed",
+    "organization_evaluation": "allowed-with-conditions",
     "noncommercial_modified_distribution": "allowed-with-conditions",
-    "organization_use": "agreement-required",
+    "organization_production_use": "agreement-required",
     "commercial_distribution": "agreement-required",
     "hosted_commercial_use": "agreement-required"
   },
@@ -39,11 +44,42 @@
     "synthetic_training_data": "permission-required",
     "model_improvement": "permission-required"
   },
+  "rights_reservations": {
+    "text_and_data_mining_nonresearch": "reserved-to-extent-permitted-by-law",
+    "model_training": "reserved",
+    "reusable_dataset_construction": "reserved",
+    "model_improvement": "reserved"
+  },
+  "permission_requests": {
+    "commercial": "REPLACE_WITH_COMMERCIAL_PERMISSION_URL_OR_CONTACT",
+    "ai": "REPLACE_WITH_AI_PERMISSION_URL_OR_CONTACT",
+    "evaluation": "REPLACE_WITH_EVALUATION_EXTENSION_URL_OR_CONTACT",
+    "general": "REPLACE_WITH_GENERAL_LICENSE_CONTACT"
+  },
+  "provenance": {
+    "digest_algorithm": "sha256",
+    "legal_text_digest": "c3c5a834df1b0ef65b076aa4c8a233be1a17005016f60f6978a44ce0a17a6c85"
+  },
   "automation": {
     "conflict_policy": "deny-on-conflict",
     "missing_field_policy": "do-not-infer-rights",
+    "unknown_value_policy": "do-not-infer-rights",
     "machine_metadata_authority": "informational",
     "additional_permissions_require_authenticated_grant": true
   },
-  "grants": []
+  "grants": [],
+  "protocol": {
+    "name": "Kiyoshima License Passport Protocol",
+    "version": "1.0",
+    "semantics": "fail-closed-informational",
+    "canonical_repository": "https://github.com/moderubias/kiyoshima-licensing"
+  },
+  "policy_constraints": {
+    "organization_evaluation_days": 30,
+    "organization_evaluation_nonproduction_only": true,
+    "distribution_attribution_required": true,
+    "modified_portions_source_required": true,
+    "downstream_rights": "direct-from-licensor-not-sublicensed",
+    "operational_ai_provider_must_not_acquire_reserved_rights": true
+  }
 }

@@ -80,7 +80,11 @@ AI Licensee will maintain records reasonably sufficient to identify the Covered 
 
 If this Addendum conflicts with the underlying public Kiyoshima Source License on expressly granted AI rights, this Addendum controls for the AI Licensee and Covered Scope only.
 
-## 11. Signatures
+## 11. Authentication and records
+
+After signature/finalization, preserve the exact final instrument and compute any integrity digest as a detached record. Do not embed a self-hash inside the bytes being hashed.
+
+## 12. Signatures
 
 Licensor: ____________________  Date: __________
 

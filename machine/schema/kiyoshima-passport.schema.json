@@ -1,24 +1,38 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:kiyoshima:schema:license-passport:1.0",
+  "$id": "urn:kiyoshima:schema:license-passport:1.2",
   "title": "Kiyoshima License Passport",
   "type": "object",
   "required": [
     "format",
     "schema_version",
+    "declaration_scope",
     "project",
     "profile",
     "license",
     "permissions",
     "ai",
-    "automation"
+    "rights_reservations",
+    "permission_requests",
+    "automation",
+    "protocol",
+    "policy_constraints"
   ],
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "format": {
       "const": "Kiyoshima License Passport"
     },
     "schema_version": {
-      "const": "1.0"
+      "const": "1.2"
+    },
+    "declaration_scope": {
+      "enum": [
+        "covered-software",
+        "framework-canonical-license"
+      ]
     },
     "project": {
       "type": "object",
@@ -79,6 +93,9 @@
         "version": {
           "type": "string"
         },
+        "status": {
+          "type": "string"
+        },
         "authoritative_file": {
           "type": "string"
         },
@@ -92,10 +109,21 @@
       },
       "additionalProperties": true
     },
+    "repository_licensing": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "permissions": {
       "type": "object",
       "additionalProperties": {
-        "type": "string"
+        "enum": [
+          "allowed",
+          "allowed-with-conditions",
+          "agreement-required",
+          "permission-required",
+          "reserved",
+          "not-granted"
+        ]
       }
     },
     "ai": {
@@ -107,11 +135,29 @@
         ]
       }
     },
+    "rights_reservations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "permission_requests": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "automation": {
       "type": "object",
       "required": [
         "conflict_policy",
         "missing_field_policy",
+        "unknown_value_policy",
         "machine_metadata_authority",
         "additional_permissions_require_authenticated_grant"
       ],
@@ -120,6 +166,9 @@
           "const": "deny-on-conflict"
         },
         "missing_field_policy": {
+          "const": "do-not-infer-rights"
+        },
+        "unknown_value_policy": {
           "const": "do-not-infer-rights"
         },
         "machine_metadata_authority": {
@@ -136,6 +185,64 @@
       "items": {
         "type": "string"
       }
+    },
+    "protocol": {
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "semantics",
+        "canonical_repository"
+      ],
+      "properties": {
+        "name": {
+          "const": "Kiyoshima License Passport Protocol"
+        },
+        "version": {
+          "const": "1.0"
+        },
+        "semantics": {
+          "const": "fail-closed-informational"
+        },
+        "canonical_repository": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "policy_constraints": {
+      "type": "object",
+      "required": [
+        "organization_evaluation_days",
+        "organization_evaluation_nonproduction_only",
+        "distribution_attribution_required",
+        "modified_portions_source_required",
+        "downstream_rights",
+        "operational_ai_provider_must_not_acquire_reserved_rights"
+      ],
+      "properties": {
+        "organization_evaluation_days": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "organization_evaluation_nonproduction_only": {
+          "type": "boolean"
+        },
+        "distribution_attribution_required": {
+          "type": "boolean"
+        },
+        "modified_portions_source_required": {
+          "type": "boolean"
+        },
+        "downstream_rights": {
+          "const": "direct-from-licensor-not-sublicensed"
+        },
+        "operational_ai_provider_must_not_acquire_reserved_rights": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": true

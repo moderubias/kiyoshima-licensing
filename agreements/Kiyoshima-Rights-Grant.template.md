@@ -6,6 +6,8 @@
 
 **Effective date:** [date]
 
+**Visibility:** [private / public]
+
 ## Grantee identity
 
 Use one or more identifiers sufficient for the intended assurance level. A public legal name is not mandatory unless required by the transaction.
@@ -13,9 +15,9 @@ Use one or more identifiers sufficient for the intended assurance level. A publi
 - Legal name: [optional]
 - Public alias: [optional]
 - GitHub account: [optional]
-- Email: [optional/private copy]
+- Email: [optional; prefer private copy]
 - Organization identifier: [optional]
-- SSH/PGP/public-key fingerprint: [recommended for privacy-preserving strong identification]
+- SSH/PGP/public-key fingerprint: [recommended where privacy-preserving strong identification is useful]
 - Other authenticated identifier: [optional]
 
 ## Covered scope
@@ -60,8 +62,12 @@ A revocation affects future versions and future grants unless this document expr
 
 ## Authentication
 
-Recommended: publish the Grant in a canonical repository, attach it to a signed release, or sign its exact bytes/digest with a key attributable to the Issuer.
+Finalize and sign/authenticate this document first. Then compute its SHA-256 digest and store the digest **outside these exact bytes**, for example as:
 
-SHA-256 of final Grant document: [fill after finalization]
+- `KRG-YYYY-NNNN.md.sha256`;
+- a detached cryptographic signature;
+- a private contract-management record;
+- a public registry entry containing only intentionally public metadata; or
+- a trusted provenance/attestation record.
 
 Issuer signature / authenticated approval: ____________________

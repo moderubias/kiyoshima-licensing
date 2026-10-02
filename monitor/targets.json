@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "queries": [
     {
       "name": "Kiyoshima Source identifier adoption",
@@ -8,6 +8,10 @@
     {
       "name": "Kiyoshima Source name adoption",
       "query": "\"Kiyoshima Source License\""
+    },
+    {
+      "name": "Kiyoshima License Passport discovery",
+      "query": "\"Kiyoshima License Passport\" filename:KIYOSHIMA.json"
     }
   ],
   "project_queries": []

@@ -5,3 +5,6 @@ kiyoshima-fingerprint.json
 .env
 .DS_Store
 .venv/
+venv/
+__pycache__/
+dist/

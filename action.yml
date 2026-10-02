@@ -1,0 +1,50 @@
+name: Kiyoshima License Policy Check
+description: Verify a Kiyoshima License Passport or run a conservative action preflight.
+inputs:
+  path:
+    description: Repository path to inspect.
+    required: false
+    default: .
+  mode:
+    description: verify or preflight
+    required: false
+    default: verify
+  action:
+    description: Passport action key for preflight mode, for example model_training or organization_production_use.
+    required: false
+    default: ''
+  strict:
+    description: In preflight mode, return non-zero exit classes for conditional/permission-required/unknown states.
+    required: false
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        KIYOSHIMA_MODE: ${{ inputs.mode }}
+        KIYOSHIMA_PATH: ${{ inputs.path }}
+        KIYOSHIMA_ACTION: ${{ inputs.action }}
+        KIYOSHIMA_STRICT: ${{ inputs.strict }}
+      run: |
+        set -uo pipefail
+        case "$KIYOSHIMA_MODE" in
+          verify)
+            python3 "$GITHUB_ACTION_PATH/tools/klicense.py" verify-project "$KIYOSHIMA_PATH"
+            ;;
+          preflight)
+            if [ -z "$KIYOSHIMA_ACTION" ]; then
+              echo "action input is required in preflight mode" >&2
+              exit 2
+            fi
+            args=(preflight "$KIYOSHIMA_PATH" "$KIYOSHIMA_ACTION" --json)
+            if [ "$KIYOSHIMA_STRICT" = "true" ]; then
+              args+=(--strict)
+            fi
+            python3 "$GITHUB_ACTION_PATH/tools/klicense.py" "${args[@]}"
+            ;;
+          *)
+            echo "unknown mode: $KIYOSHIMA_MODE" >&2
+            exit 2
+            ;;
+        esac

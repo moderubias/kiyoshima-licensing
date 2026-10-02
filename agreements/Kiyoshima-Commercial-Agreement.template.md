@@ -4,6 +4,8 @@
 
 **Agreement ID:** [KCA-YYYY-NNNN]
 
+**Document status:** [draft / final]
+
 **Effective date:** [date]
 
 **Licensor:** [legal person/entity, address, registration information if applicable]
@@ -105,7 +107,11 @@ A material breach must be cured within [14/30] days after written notice unless 
 
 This Agreement and its attachments are the complete agreement for the Covered Project. If it conflicts with Kiyoshima Source License 1.0 for rights expressly granted here, this Agreement controls for this Licensee and scope.
 
-## 16. Signatures
+## 16. Authentication and records
+
+After signature/finalization, preserve the exact final instrument and compute any integrity digest as a detached record. Do not embed a self-hash inside the bytes being hashed.
+
+## 17. Signatures
 
 **Licensor**
 

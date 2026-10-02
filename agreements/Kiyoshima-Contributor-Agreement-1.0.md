@@ -38,7 +38,7 @@ Unless separately agreed, Contributions are provided as-is to the maximum extent
 
 ## 8. Electronic acceptance
 
-A project may record acceptance through a signed document, verified account workflow, Developer Certificate/CLA bot, pull-request attestation, or another method reasonably attributable to You. The project should preserve the acceptance record.
+A project may record acceptance through a signed document, verified account workflow, CLA bot, pull-request attestation, or another method reasonably attributable to You. The project should preserve the contributor identity used, agreement version, timestamp, and an immutable reference to the accepted text. A public repository should not publish unnecessary private identity data merely to prove acceptance.
 
 ## 9. Governing law
 

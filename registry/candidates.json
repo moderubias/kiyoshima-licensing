@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.1",
+  "registry_kind": "license-candidate-lineage",
+  "entries": [
+    {
+      "candidate_revision": "rc.1",
+      "canonical_id_target": "Kiyoshima-Source-1.0",
+      "sha256": "1d0786b25881309c89f2d1e3b8a8de93fce433d975b6b8028acf58e6b678eb01",
+      "published_at": "2026-10-02",
+      "status": "superseded",
+      "note": "Initial public candidate committed before the hardened framework pass."
+    },
+    {
+      "candidate_revision": "rc.2",
+      "canonical_id_target": "Kiyoshima-Source-1.0",
+      "sha256": "ae059ffd06d6f87d403e4eb8415626334f3fa0e730dbb1a524a30f8593c25387",
+      "published_at": "2026-10-02",
+      "status": "superseded",
+      "note": "Hardened candidate with evaluation, machine-policy, TDM, provenance, and tooling revisions."
+    },
+    {
+      "candidate_revision": "rc.3",
+      "canonical_id_target": "Kiyoshima-Source-1.0",
+      "sha256": "c3c5a834df1b0ef65b076aa4c8a233be1a17005016f60f6978a44ce0a17a6c85",
+      "published_at": "2026-10-02",
+      "status": "current-candidate",
+      "note": "Clarifies downstream recipient licensing and ships Passport schema 1.2 plus agent preflight/grant verification/TDM export tooling."
+    }
+  ]
+}

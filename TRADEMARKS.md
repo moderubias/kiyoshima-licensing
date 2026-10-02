@@ -1,8 +1,8 @@
 # Names, marks, and identity
 
-The software license grants no trademark or branding rights except what is necessary for truthful attribution.
+The software licenses in this repository grant no trademark or branding rights except what is necessary for truthful attribution and truthful identification of an exact official license version.
 
-The framework uses these source identifiers consistently:
+Preferred public names:
 
 - Kiyoshima Licensing Framework
 - Kiyoshima Source License
@@ -11,7 +11,8 @@ The framework uses these source identifiers consistently:
 - Kiyoshima Grant
 - Kiyoshima AI
 - Kiyoshima Contributor
+- Kiyoshima License Passport
 
-Third parties may truthfully state that their software is licensed under an exact, unmodified Kiyoshima Source License version. They may not imply that a modified license text is official, that their project is sponsored or certified by the license steward, or that they own Kiyoshima branding.
+Third parties may truthfully state that their software is licensed under an exact, unmodified Kiyoshima Source License version. They may not imply that modified legal text is official, that their project is sponsored/certified by the license steward, or that they own Kiyoshima branding.
 
-Before treating any of these names as registered trademarks, perform jurisdiction-specific clearance and registration. This file intentionally does not claim registration that has not occurred.
+Before claiming registered-trademark status, perform jurisdiction-specific clearance and registration. This repository intentionally makes no unverified registration claim.
