@@ -12,6 +12,14 @@ It lets projects use one Kiyoshima Passport/tooling workflow across both
 unrestricted OSS and Kiyoshima Source products without forcing an unknown legal
 license onto open projects.
 
+## Why does the Apache-2.0 text still contain `[yyyy] [name of copyright owner]`?
+
+That text is in Apache-2.0's standard Appendix explaining how to apply the license.
+It is not a project-specific field for the generator to substitute inside the
+canonical license text. Kiyoshima therefore preserves Apache-2.0 byte-for-byte;
+project ownership is recorded separately in the Passport/package metadata and,
+when desired, project notices.
+
 ## Is Kiyoshima Source 1.0 open source?
 
 No. It is source-available. It intentionally restricts organization production

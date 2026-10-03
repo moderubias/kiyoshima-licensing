@@ -28,10 +28,38 @@ Alternative expressions supported by the generator:
 ```
 
 The project is branded/profiled as **Kiyoshima Open**, but the standard SPDX
-license expression remains the controlling legal license. The generator creates
-`KIYOSHIMA.json`, `NOTICE`, `REUSE.toml`, the relevant `LICENSES/` files, and a
-README snippet. For dual MIT/Apache it also creates `LICENSE-MIT` and
-`LICENSE-APACHE`.
+license expression remains the controlling legal license. The default layout is
+intentionally lean:
+
+- `MIT` or `Apache-2.0`: `LICENSE` + `KIYOSHIMA.json`;
+- `MIT OR Apache-2.0`: a short root `LICENSE`, `LICENSES/MIT.txt`,
+  `LICENSES/Apache-2.0.txt`, and `KIYOSHIMA.json`.
+
+`NOTICE`, `REUSE.toml`, and README snippets are not generated unless requested.
+Use `--notice`, `--reuse`, or `--readme-snippet docs/README-LICENSING.md` when
+those artifacts are actually useful. The generator never creates redundant
+`LICENSE-MIT` / `LICENSE-APACHE` copies.
+
+## Compact an older generated layout
+
+Framework 1.2.0-rc1 generated duplicate root license files and optional metadata
+unconditionally. Preview a safe cleanup first:
+
+```bash
+klicense compact-project /path/to/project
+```
+
+Apply only after reviewing the plan:
+
+```bash
+klicense compact-project /path/to/project --apply
+klicense verify-project /path/to/project
+klicense doctor /path/to/project
+```
+
+The apply step creates an external timestamped backup. Customized `NOTICE`,
+`REUSE.toml`, or licensing snippets are preserved rather than silently deleted.
+
 
 ## Source profile
 
@@ -47,10 +75,11 @@ klicense init-project /path/to/project \
 klicense verify-project /path/to/project
 ```
 
-The initializer copies the exact Kiyoshima Source candidate bytes and creates
-its `LicenseRef-*` REUSE file. `--contact` is required because organization,
-commercial, evaluation-extension, and AI rights may need a route to the
-licensor.
+The initializer copies the exact Kiyoshima Source candidate bytes to root
+`LICENSE` and creates `KIYOSHIMA.json`. A duplicate `LicenseRef-*` file and
+`REUSE.toml` are created only with `--reuse`. `--contact` is required because
+organization, commercial, evaluation-extension, and AI rights may need a route
+to the licensor.
 
 ## Existing Source projects
 
@@ -63,7 +92,7 @@ klicense sync-project /path/to/project
 
 The apply step creates an external timestamped backup before updating the legal
 files/Passport. The Source `rc.3` legal bytes are unchanged in Framework
-1.2.0-rc1; the main migration is Passport schema 1.3 plus supporting-file
+1.2.0-rc2; the main migration is Passport schema 1.3 plus supporting-file
 integrity metadata.
 
 ## Manual adoption invariant

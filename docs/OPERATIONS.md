@@ -67,11 +67,32 @@ Then:
 
 ```bash
 klicense verify-project /path/to/project
+klicense doctor /path/to/project
 ```
 
-Merge `README-LICENSING.md` into the project's main README. The generated file may remain as a reference or be removed after the merge.
+The default project layout is lean. `NOTICE`, `REUSE.toml`, and a generated
+README snippet are opt-in. For example, request a docs snippet explicitly with
+`--readme-snippet docs/README-LICENSING.md`.
 
-## 4. Sync an existing Kiyoshima Source project
+## 4. Compact a Framework 1.2.0-rc1 project
+
+Preview:
+
+```bash
+klicense compact-project /path/to/project
+```
+
+Apply:
+
+```bash
+klicense compact-project /path/to/project --apply
+```
+
+The command backs up every file it changes or removes outside the project. It
+removes only generated/redundant artifacts it can recognize byte-for-byte;
+customized files are preserved.
+
+## 5. Sync an existing Kiyoshima Source project
 
 Preview first:
 
@@ -87,7 +108,7 @@ python tools/klicense.py sync-project /path/to/project
 
 The command backs up the affected licensing files outside the project directory before replacing the legal text and Passport. It deliberately does not rewrite project README or NOTICE prose automatically.
 
-## 5. Ask the Passport a rights question
+## 6. Ask the Passport a rights question
 
 Humans, agents, CI, and policy tooling can query normalized state:
 
@@ -98,7 +119,7 @@ python tools/klicense.py query-right /path/to/project model_training --json
 
 An unknown key remains unknown. The CLI never turns missing metadata into permission.
 
-## 6. Agent/CI preflight
+## 7. Agent/CI preflight
 
 For a conservative machine decision about one declared action:
 
@@ -109,7 +130,7 @@ python tools/klicense.py preflight /path/to/project model_training --json --stri
 
 Without `--strict`, preflight is informational and exits successfully even when permission is required. With `--strict`, exit code `0` means allowed within declared scope, `10` means allowed with conditions, `20` means permission is required/not granted by the public license, and `30` means unknown. Invalid Passports use exit code `4`. The legal text always controls.
 
-## 7. Register an owned project
+## 8. Register an owned project
 
 From the canonical framework repository:
 
@@ -124,7 +145,7 @@ For an Open-profile project, record the controlling SPDX expression explicitly, 
 
 Commit the registry change. The registry is public metadata, not the source of legal rights.
 
-## 8. Issue a private or public Rights Grant
+## 9. Issue a private or public Rights Grant
 
 Example:
 
@@ -150,7 +171,7 @@ python tools/klicense.py verify-grant ../private-grants/KRG-2026-0001.record.jso
 
 Digest verification does not itself verify a pending external signature; it proves only that the document bytes match the recorded digest.
 
-## 9. Fingerprint a commercially important project
+## 10. Fingerprint a commercially important project
 
 ```bash
 python tools/klicense.py fingerprint /path/to/project --output /secure/path/project-fingerprint.json
@@ -158,7 +179,7 @@ python tools/klicense.py fingerprint /path/to/project --output /secure/path/proj
 
 A fingerprint supports provenance comparison. It is not proof that a later match is infringing.
 
-## 10. Monitor public discovery signals
+## 11. Monitor public discovery signals
 
 Add carefully chosen public-code queries to `monitor/targets.json`, then run:
 
@@ -169,7 +190,7 @@ python tools/klicense.py summarize-watch kiyoshima-watch.json
 
 The scheduled GitHub workflow can do this automatically. Search results are leads only and require human review.
 
-## 11. Export TDM reservation metadata for an origin you control
+## 12. Export TDM reservation metadata for an origin you control
 
 ```bash
 python tools/klicense.py export-tdm \
@@ -181,7 +202,7 @@ python tools/klicense.py export-tdm \
 
 Deploy the generated `/.well-known/tdmrep.json` and policy JSON-LD only on an HTTP origin you control. This is an interoperability signal layered on top of the license; it is not a replacement for the controlling legal text.
 
-## 12. Framework release procedure
+## 13. Framework release procedure
 
 Before a final legal release:
 
@@ -197,6 +218,6 @@ Before a final legal release:
 
 Never edit the bytes of an already-final legal version. Publish a new legal version instead.
 
-## 13. Framework repository upgrades
+## 14. Framework repository upgrades
 
-For the 1.1.0-rc2 -> 1.2.0-rc1 overlay, follow `UPGRADE-1.2.0-rc1.md`. The already-installed `klicense` symlink normally continues to work because its target file is updated in place. Do not run the old 1.0 migration cleanup for this overlay.
+For the 1.2.0-rc1 -> 1.2.0-rc2 overlay, follow `UPGRADE-1.2.0-rc2.md`. The already-installed `klicense` symlink normally continues to work because its target file is updated in place. Do not run the old 1.0 migration cleanup for this overlay.

@@ -101,7 +101,17 @@ klicense policy-summary /path/to/project
 klicense preflight /path/to/project organization_production_use --json
 ```
 
-`init-project` refuses to overwrite licensing files unless `--force` is used.
+`init-project` now uses a lean layout by default: it writes only the files needed
+for the selected legal expression and Passport. `NOTICE`, `REUSE.toml`, and a
+README licensing snippet are opt-in via `--notice`, `--reuse`, and
+`--readme-snippet PATH`. Dual `MIT OR Apache-2.0` projects keep the two complete
+license texts under `LICENSES/` and a short root `LICENSE` notice; no
+`LICENSE-MIT`/`LICENSE-APACHE` duplicates are generated.
+
+Use `klicense compact-project /path/to/project` to preview cleanup of projects
+created by Framework 1.2.0-rc1, then re-run with `--apply`. The command makes an
+external timestamped backup before deleting generated/redundant files.
+
 For existing Kiyoshima Source projects, `sync-project` creates an external backup
 before updating the Passport/legal files.
 
@@ -120,7 +130,7 @@ before updating the Passport/legal files.
 
 ## Status
 
-Framework: **1.2.0-rc1**
+Framework: **1.2.0-rc2**
 Passport schema: **1.3**
 Kiyoshima Source candidate: **1.0 rc.3**
 

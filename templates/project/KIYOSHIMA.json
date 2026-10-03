@@ -22,13 +22,7 @@
     "sha256": "c3c5a834df1b0ef65b076aa4c8a233be1a17005016f60f6978a44ce0a17a6c85",
     "candidate_revision": "rc.3",
     "kind": "custom-license",
-    "supporting_files": [
-      {
-        "path": "LICENSES/LicenseRef-Kiyoshima-Source-1.0.txt",
-        "spdx_id": "LicenseRef-Kiyoshima-Source-1.0",
-        "sha256": "c3c5a834df1b0ef65b076aa4c8a233be1a17005016f60f6978a44ce0a17a6c85"
-      }
-    ]
+    "supporting_files": []
   },
   "permissions": {
     "individual_personal_use": "allowed",

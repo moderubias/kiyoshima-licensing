@@ -1,5 +1,16 @@
 # Changelog
 
+## Framework 1.2.0-rc2 — lean project layout and safer migration
+
+- Makes project generation lean by default: `NOTICE`, `REUSE.toml`, and README snippets are opt-in.
+- Removes generated `LICENSE-MIT` / `LICENSE-APACHE` duplicates.
+- Uses a short root dual-license notice plus canonical `LICENSES/MIT.txt` and `LICENSES/Apache-2.0.txt` for `MIT OR Apache-2.0`.
+- Keeps canonical Apache-2.0 text byte-identical; its Appendix placeholders are intentionally not project metadata.
+- Adds `compact-project` with dry-run-by-default planning, external backups, and conservative deletion of only recognized generated files.
+- Stops forcing Source projects into duplicate REUSE license copies unless REUSE is explicitly requested or already present.
+- Adds Rust/Cargo license-metadata diagnostics to `doctor`.
+- Preserves Kiyoshima Source 1.0 rc.3 legal bytes and Passport schema 1.3 unchanged.
+
 ## Framework 1.2.0-rc1 — license-agnostic Open profile
 
 - Upgrades Kiyoshima License Passport to schema 1.3.

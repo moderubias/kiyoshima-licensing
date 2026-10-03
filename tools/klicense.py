@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import shutil
 import sys
 import tempfile
@@ -11,8 +12,13 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python < 3.11
+    tomllib = None
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-FRAMEWORK_VERSION = "1.2.0-rc1"
+FRAMEWORK_VERSION = "1.2.0-rc2"
 CANONICAL = ROOT / "LICENSE-KIYOSHIMA-SOURCE-1.0.txt"
 APACHE = ROOT / "LICENSES" / "Apache-2.0.txt"
 MIT_TEMPLATE = ROOT / "templates" / "licenses" / "MIT.txt.template"
@@ -491,14 +497,9 @@ def project_errors(base: pathlib.Path) -> list[str]:
         if lic.get("spdx_expression") != SPDX_REF:
             errors.append(f"source profile must use spdx_expression {SPDX_REF}")
         lic_file = base / "LICENSE"
-        reuse_copy = base / "LICENSES" / f"{SPDX_REF}.txt"
         if not lic_file.exists():
             errors.append("source profile project is missing root LICENSE")
-        if not reuse_copy.exists():
-            errors.append(f"source profile project is missing LICENSES/{SPDX_REF}.txt")
-        if lic_file.exists() and reuse_copy.exists() and lic_file.read_bytes() != reuse_copy.read_bytes():
-            errors.append("project root LICENSE and LICENSES custom-license copy differ")
-        if lic_file.exists() and CANONICAL.exists() and lic_file.read_bytes() != CANONICAL.read_bytes():
+        elif CANONICAL.exists() and lic_file.read_bytes() != CANONICAL.read_bytes():
             errors.append("project claims Kiyoshima Source 1.0 but legal bytes differ from canonical candidate")
     if has_placeholder(d):
         errors.append("Passport still contains REPLACE_WITH or bracket placeholders")
@@ -536,29 +537,36 @@ def render_mit_license(year: str, holder: str) -> bytes:
     return text.encode("utf-8")
 
 
-def render_open_license(expression: str, year: str, holder: str):
+def render_dual_license_notice(project_name: str, year: str, holder: str) -> bytes:
+    text = f"""{project_name} — licensing notice
+
+Copyright (c) {year} {holder}
+SPDX-License-Identifier: MIT OR Apache-2.0
+
+This project is dual-licensed at your option under either:
+
+- the MIT License: LICENSES/MIT.txt
+- the Apache License, Version 2.0: LICENSES/Apache-2.0.txt
+
+The complete license texts in LICENSES/ control. The Kiyoshima Open profile and
+KIYOSHIMA.json are machine-readable metadata conventions and add no license terms.
+"""
+    return text.encode("utf-8")
+
+
+def render_open_license(expression: str, year: str, holder: str, project_name: str):
     if expression not in GENERATED_OPEN_LICENSES:
         raise ValueError(f"unsupported generated Open license expression: {expression}")
     mit = render_mit_license(year, holder)
     apache = APACHE.read_bytes()
     if expression == "MIT":
-        return mit, {"MIT": mit}, {}
+        return mit, {}
     if expression == "Apache-2.0":
-        return apache, {"Apache-2.0": apache}, {}
-
-    header = (
-        "Kiyoshima Open Profile — Dual-License Notice\n\n"
-        "You may use this project under your choice of either the MIT License or the "
-        "Apache License, Version 2.0.\n\n"
-        "SPDX-License-Identifier: MIT OR Apache-2.0\n\n"
-        "The Kiyoshima Open profile and KIYOSHIMA.json are metadata/tooling conventions. "
-        "They do not modify either license.\n\n"
-        "===== MIT License =====\n\n"
-    ).encode("utf-8")
-    middle = b"\n===== Apache License 2.0 =====\n\n"
-    combined = header + mit + middle + apache
-    side_files = {"LICENSE-MIT": mit, "LICENSE-APACHE": apache}
-    return combined, {"MIT": mit, "Apache-2.0": apache}, side_files
+        return apache, {}
+    return render_dual_license_notice(project_name, year, holder), {
+        "MIT": mit,
+        "Apache-2.0": apache,
+    }
 
 
 def open_license_display_name(expression: str) -> str:
@@ -569,11 +577,50 @@ def open_license_display_name(expression: str) -> str:
     }[expression]
 
 
+def _optional_project_path(base: pathlib.Path, rel: str | None) -> pathlib.Path | None:
+    if not rel:
+        return None
+    candidate = (base / rel).resolve()
+    try:
+        candidate.relative_to(base)
+    except ValueError:
+        raise ValueError(f"path escapes project root: {rel}")
+    return candidate
+
+
+def _render_open_notice(args, year: str, expression: str) -> str:
+    notice = (ROOT / "templates" / "project" / "NOTICE-OPEN.template").read_text(encoding="utf-8")
+    for old, new in {
+        "[project name]": args.name,
+        "[year]": year,
+        "[copyright holder]": args.holder,
+        "[repository URL]": args.repository,
+        "[SPDX expression]": expression,
+    }.items():
+        notice = notice.replace(old, new)
+    return notice
+
+
+def _render_open_reuse(year: str, holder: str, expression: str) -> str:
+    reuse = (ROOT / "templates" / "project" / "REUSE-OPEN.toml").read_text(encoding="utf-8")
+    reuse = reuse.replace("REPLACE_WITH_COPYRIGHT_NOTICE", f"{year} {holder}")
+    return reuse.replace("REPLACE_WITH_SPDX_EXPRESSION", expression)
+
+
 def cmd_init_project(args):
     base = pathlib.Path(args.path).resolve()
     base.mkdir(parents=True, exist_ok=True)
     year = str(datetime.now(timezone.utc).year)
     outputs = {}
+    want_reuse = bool(getattr(args, "reuse", False))
+    want_notice = bool(getattr(args, "notice", False))
+    readme_rel = getattr(args, "readme_snippet", None)
+
+    try:
+        readme_path = _optional_project_path(base, readme_rel)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
 
     if args.profile == "source":
         if not args.contact:
@@ -593,34 +640,39 @@ def cmd_init_project(args):
         template["permission_requests"]["evaluation"] = args.evaluation_contact or args.commercial_contact or args.contact
         digest = sha256_file(CANONICAL)
         template["license"]["sha256"] = digest
-        template["license"]["supporting_files"] = [{
-            "path": f"LICENSES/{SPDX_REF}.txt",
-            "spdx_id": SPDX_REF,
-            "sha256": digest,
-        }]
+        template["license"]["supporting_files"] = []
         template["provenance"]["legal_text_digest"] = digest
-
-        notice = (ROOT / "templates" / "project" / "NOTICE.template").read_text(encoding="utf-8")
-        notice = notice.replace("[project name]", args.name)
-        notice = notice.replace("[year]", year)
-        notice = notice.replace("[copyright holder]", args.holder)
-        notice = notice.replace("[repository URL]", args.repository)
-        notice = notice.replace("[contact URL or email]", args.contact)
-        reuse = (ROOT / "templates" / "project" / "REUSE.toml").read_text(encoding="utf-8")
-        reuse = reuse.replace("REPLACE_WITH_COPYRIGHT_NOTICE", f"{year} {args.holder}")
-        readme_snippet = (ROOT / "templates" / "project" / "README-LICENSING.md").read_text(encoding="utf-8")
 
         outputs = {
             base / "LICENSE": CANONICAL.read_bytes(),
-            base / "LICENSES" / f"{SPDX_REF}.txt": CANONICAL.read_bytes(),
             base / PASSPORT_NAME: (json.dumps(template, indent=2, ensure_ascii=False) + "\n").encode("utf-8"),
-            base / "NOTICE": notice.encode("utf-8"),
-            base / "REUSE.toml": reuse.encode("utf-8"),
-            base / "README-LICENSING.md": readme_snippet.encode("utf-8"),
         }
+        if want_reuse:
+            template["license"]["supporting_files"] = [{
+                "path": f"LICENSES/{SPDX_REF}.txt",
+                "spdx_id": SPDX_REF,
+                "sha256": digest,
+            }]
+            reuse = (ROOT / "templates" / "project" / "REUSE.toml").read_text(encoding="utf-8")
+            reuse = reuse.replace("REPLACE_WITH_COPYRIGHT_NOTICE", f"{year} {args.holder}")
+            outputs[base / "LICENSES" / f"{SPDX_REF}.txt"] = CANONICAL.read_bytes()
+            outputs[base / "REUSE.toml"] = reuse.encode("utf-8")
+            outputs[base / PASSPORT_NAME] = (json.dumps(template, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+        if want_notice:
+            notice = (ROOT / "templates" / "project" / "NOTICE.template").read_text(encoding="utf-8")
+            notice = notice.replace("[project name]", args.name)
+            notice = notice.replace("[year]", year)
+            notice = notice.replace("[copyright holder]", args.holder)
+            notice = notice.replace("[repository URL]", args.repository)
+            notice = notice.replace("[contact URL or email]", args.contact)
+            outputs[base / "NOTICE"] = notice.encode("utf-8")
+        if readme_path:
+            snippet = (ROOT / "templates" / "project" / "README-LICENSING.md").read_bytes()
+            outputs[readme_path] = snippet
+
     elif args.profile == "open":
         expression = args.open_license
-        root_license, reuse_licenses, side_files = render_open_license(expression, year, args.holder)
+        root_license, component_licenses = render_open_license(expression, year, args.holder, args.name)
         template = load_json(ROOT / "templates" / "project" / "KIYOSHIMA-OPEN.json")
         contact = args.contact or args.repository
         template["project"].update({
@@ -634,48 +686,47 @@ def cmd_init_project(args):
             "name": open_license_display_name(expression),
             "spdx_expression": expression,
             "sha256": hashlib.sha256(root_license).hexdigest(),
+            "legal_priority": (
+                "license-declaration-plus-component-texts-control"
+                if expression == "MIT OR Apache-2.0"
+                else "license-text-controls"
+            ),
         })
+        template["permission_requests"]["general"] = contact
+        template["provenance"]["legal_text_digest"] = hashlib.sha256(root_license).hexdigest()
+        template["policy_constraints"]["open_profile_spdx_expression"] = expression
+
+        # A compound SPDX expression needs both complete license texts. Single-license
+        # projects keep the full legal text in root LICENSE and need no duplicate copy.
+        if want_reuse and expression in {"MIT", "Apache-2.0"}:
+            component_licenses = {expression: root_license}
         template["license"]["supporting_files"] = [
             {
                 "path": f"LICENSES/{spdx_id}.txt",
                 "spdx_id": spdx_id,
                 "sha256": hashlib.sha256(data).hexdigest(),
             }
-            for spdx_id, data in reuse_licenses.items()
+            for spdx_id, data in component_licenses.items()
         ]
-        template["permission_requests"]["general"] = contact
-        template["provenance"]["legal_text_digest"] = hashlib.sha256(root_license).hexdigest()
-        template["policy_constraints"]["open_profile_spdx_expression"] = expression
-
-        notice = (ROOT / "templates" / "project" / "NOTICE-OPEN.template").read_text(encoding="utf-8")
-        for old, new in {
-            "[project name]": args.name,
-            "[year]": year,
-            "[copyright holder]": args.holder,
-            "[repository URL]": args.repository,
-            "[SPDX expression]": expression,
-        }.items():
-            notice = notice.replace(old, new)
-        reuse = (ROOT / "templates" / "project" / "REUSE-OPEN.toml").read_text(encoding="utf-8")
-        reuse = reuse.replace("REPLACE_WITH_COPYRIGHT_NOTICE", f"{year} {args.holder}")
-        reuse = reuse.replace("REPLACE_WITH_SPDX_EXPRESSION", expression)
-        readme_snippet = (ROOT / "templates" / "project" / "README-LICENSING-OPEN.md").read_text(encoding="utf-8")
-        readme_snippet = readme_snippet.replace("REPLACE_WITH_SPDX_EXPRESSION", expression)
 
         outputs = {
             base / "LICENSE": root_license,
             base / PASSPORT_NAME: (json.dumps(template, indent=2, ensure_ascii=False) + "\n").encode("utf-8"),
-            base / "NOTICE": notice.encode("utf-8"),
-            base / "REUSE.toml": reuse.encode("utf-8"),
-            base / "README-LICENSING.md": readme_snippet.encode("utf-8"),
         }
-        for spdx_id, data in reuse_licenses.items():
+        for spdx_id, data in component_licenses.items():
             outputs[base / "LICENSES" / f"{spdx_id}.txt"] = data
-        for name, data in side_files.items():
-            outputs[base / name] = data
+        if want_notice:
+            outputs[base / "NOTICE"] = _render_open_notice(args, year, expression).encode("utf-8")
+        if want_reuse:
+            outputs[base / "REUSE.toml"] = _render_open_reuse(year, args.holder, expression).encode("utf-8")
+        if readme_path:
+            snippet = (ROOT / "templates" / "project" / "README-LICENSING-OPEN.md").read_text(encoding="utf-8")
+            snippet = snippet.replace("REPLACE_WITH_SPDX_EXPRESSION", expression)
+            outputs[readme_path] = snippet.encode("utf-8")
     else:
         print(f"ERROR: init-project does not generate profile {args.profile!r}", file=sys.stderr)
         return 2
+
     conflicts = [str(p) for p in outputs if p.exists() and not args.force]
     if conflicts:
         print("ERROR: refusing to overwrite existing files:", file=sys.stderr)
@@ -691,7 +742,8 @@ def cmd_init_project(args):
     for p, data in outputs.items():
         safe_write(p, data, args.force)
     print(f"initialized Kiyoshima {args.profile.capitalize()} profile in {base}")
-    print("Next: merge README-LICENSING.md into your README, then run verify-project.")
+    print("layout: lean (NOTICE, REUSE.toml, and README snippets are opt-in)")
+    print("Next: run verify-project and doctor.")
     return 0
 
 
@@ -725,20 +777,25 @@ def cmd_sync_project(args):
         synced["permission_requests"][key] = current.get("permission_requests", {}).get(key) or contact
     digest = sha256_file(CANONICAL)
     synced["license"]["sha256"] = digest
-    synced["license"]["supporting_files"] = [{
-        "path": f"LICENSES/{SPDX_REF}.txt",
-        "spdx_id": SPDX_REF,
-        "sha256": digest,
-    }]
+    reuse_copy = base / "LICENSES" / f"{SPDX_REF}.txt"
+    if reuse_copy.exists():
+        synced["license"]["supporting_files"] = [{
+            "path": f"LICENSES/{SPDX_REF}.txt",
+            "spdx_id": SPDX_REF,
+            "sha256": digest,
+        }]
+    else:
+        synced["license"]["supporting_files"] = []
     synced["provenance"]["legal_text_digest"] = digest
 
     notice_path = base / "NOTICE"
     old_notice = notice_path.read_text(encoding="utf-8") if notice_path.exists() else None
     outputs = {
         base / "LICENSE": CANONICAL.read_bytes(),
-        base / "LICENSES" / f"{SPDX_REF}.txt": CANONICAL.read_bytes(),
         passport_path: (json.dumps(synced, indent=2, ensure_ascii=False) + "\n").encode("utf-8"),
     }
+    if reuse_copy.exists():
+        outputs[reuse_copy] = CANONICAL.read_bytes()
 
     if args.dry_run:
         old_hash = lic.get("sha256", "unknown")
@@ -807,11 +864,13 @@ def cmd_upgrade_passport(args):
             upgraded["permission_requests"][key] = d.get("permission_requests", {}).get(key) or contact
         digest = sha256_file(CANONICAL)
         upgraded["license"]["sha256"] = digest
-        upgraded["license"]["supporting_files"] = [{
+        project_root = path.parent
+        reuse_copy = project_root / "LICENSES" / f"{SPDX_REF}.txt"
+        upgraded["license"]["supporting_files"] = ([{
             "path": f"LICENSES/{SPDX_REF}.txt",
             "spdx_id": SPDX_REF,
             "sha256": digest,
-        }]
+        }] if reuse_copy.exists() else [])
         upgraded["provenance"]["legal_text_digest"] = digest
     else:
         upgraded = dict(d)
@@ -848,6 +907,276 @@ def cmd_upgrade_passport(args):
     print(f"upgraded {path} from schema {old} to {CURRENT_PASSPORT_SCHEMA}; backup: {backup}")
     return 0
 
+
+
+def _extract_mit_year(data: bytes) -> str | None:
+    text = data.decode("utf-8", errors="replace")
+    match = re.search(r"Copyright\s*\(c\)\s*([0-9]{4}(?:-[0-9]{4})?)\s+", text)
+    return match.group(1) if match else None
+
+
+def _render_open_notice_from_passport(d: dict, year: str) -> bytes:
+    project = d.get("project", {})
+    expression = d.get("license", {}).get("spdx_expression", "")
+    notice = (ROOT / "templates" / "project" / "NOTICE-OPEN.template").read_text(encoding="utf-8")
+    replacements = {
+        "[project name]": str(project.get("name", "")),
+        "[year]": year,
+        "[copyright holder]": str(project.get("copyright_holder", "")),
+        "[repository URL]": str(project.get("repository", "")),
+        "[SPDX expression]": str(expression),
+    }
+    for old, new in replacements.items():
+        notice = notice.replace(old, new)
+    return notice.encode("utf-8")
+
+
+def _render_source_notice_from_passport(d: dict, year: str) -> bytes:
+    project = d.get("project", {})
+    notice = (ROOT / "templates" / "project" / "NOTICE.template").read_text(encoding="utf-8")
+    replacements = {
+        "[project name]": str(project.get("name", "")),
+        "[year]": year,
+        "[copyright holder]": str(project.get("copyright_holder", "")),
+        "[repository URL]": str(project.get("repository", "")),
+        "[contact URL or email]": str(project.get("contact", "")),
+    }
+    for old, new in replacements.items():
+        notice = notice.replace(old, new)
+    return notice.encode("utf-8")
+
+
+def _render_source_reuse_from_passport(d: dict, year: str) -> bytes:
+    project = d.get("project", {})
+    reuse = (ROOT / "templates" / "project" / "REUSE.toml").read_text(encoding="utf-8")
+    reuse = reuse.replace(
+        "REPLACE_WITH_COPYRIGHT_NOTICE",
+        f"{year} {project.get('copyright_holder', '')}",
+    )
+    return reuse.encode("utf-8")
+
+
+def _project_year(base: pathlib.Path, d: dict) -> str:
+    candidates = [
+        base / "LICENSES" / "MIT.txt",
+        base / "LICENSE-MIT",
+        base / "LICENSE",
+    ]
+    for candidate in candidates:
+        if candidate.exists() and candidate.is_file():
+            year = _extract_mit_year(candidate.read_bytes())
+            if year:
+                return year
+    notice = base / "NOTICE"
+    if notice.exists() and notice.is_file():
+        text = notice.read_text(encoding="utf-8", errors="replace")
+        match = re.search(r"(?:COPYRIGHT:\s*©?|Copyright(?:\s*\(c\))?)\s*([0-9]{4}(?:-[0-9]{4})?)", text, re.IGNORECASE)
+        if match:
+            return match.group(1)
+    return str(datetime.now(timezone.utc).year)
+
+
+def _backup_project_paths(base: pathlib.Path, paths: list[pathlib.Path]) -> pathlib.Path:
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    backup = base.parent / f"{base.name}.kiyoshima-backup-{stamp}"
+    backup.mkdir(parents=True, exist_ok=False)
+    seen = set()
+    for path in paths:
+        if path in seen or not path.exists():
+            continue
+        seen.add(path)
+        rel = path.relative_to(base)
+        dest = backup / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if path.is_file():
+            shutil.copy2(path, dest)
+    return backup
+
+
+def cmd_compact_project(args):
+    base = pathlib.Path(args.path).resolve()
+    passport_path = base / PASSPORT_NAME
+    if not passport_path.exists():
+        print(f"ERROR: missing {PASSPORT_NAME} in {base}", file=sys.stderr)
+        return 2
+
+    errors = project_errors(base)
+    if errors:
+        print("ERROR: project must verify before layout compaction:", file=sys.stderr)
+        for error in errors:
+            print(f"  {error}", file=sys.stderr)
+        return 1
+
+    d = load_json(passport_path)
+    profile = d.get("profile")
+    lic = d.get("license", {})
+    project = d.get("project", {})
+    year = _project_year(base, d)
+    updates: dict[pathlib.Path, bytes] = {}
+    removals: list[pathlib.Path] = []
+    preserved: list[pathlib.Path] = []
+
+    if profile == "open":
+        expression = lic.get("spdx_expression")
+        if expression not in GENERATED_OPEN_LICENSES:
+            print(f"ERROR: unsupported Open expression for compaction: {expression!r}", file=sys.stderr)
+            return 2
+
+        if expression == "MIT OR Apache-2.0":
+            mit_path = base / "LICENSES" / "MIT.txt"
+            apache_path = base / "LICENSES" / "Apache-2.0.txt"
+            if not mit_path.exists() or not apache_path.exists():
+                print("ERROR: dual-license compaction requires LICENSES/MIT.txt and LICENSES/Apache-2.0.txt", file=sys.stderr)
+                return 2
+            root_license = render_dual_license_notice(
+                str(project.get("name", base.name)),
+                year,
+                str(project.get("copyright_holder", "")),
+            )
+            updates[base / "LICENSE"] = root_license
+            component_paths = [("MIT", mit_path), ("Apache-2.0", apache_path)]
+            lic["supporting_files"] = [
+                {
+                    "path": f"LICENSES/{spdx_id}.txt",
+                    "spdx_id": spdx_id,
+                    "sha256": sha256_file(path),
+                }
+                for spdx_id, path in component_paths
+            ]
+            lic["legal_priority"] = "license-declaration-plus-component-texts-control"
+            lic["sha256"] = hashlib.sha256(root_license).hexdigest()
+            d.setdefault("provenance", {})["legal_text_digest"] = lic["sha256"]
+        else:
+            root_license = base / "LICENSE"
+            if not root_license.exists():
+                print("ERROR: single-license Open project is missing root LICENSE", file=sys.stderr)
+                return 2
+            lic["sha256"] = sha256_file(root_license)
+            d.setdefault("provenance", {})["legal_text_digest"] = lic["sha256"]
+            component = base / "LICENSES" / f"{expression}.txt"
+            reuse_path = base / "REUSE.toml"
+            generated_reuse = _render_open_reuse(
+                year,
+                str(project.get("copyright_holder", "")),
+                expression,
+            ).encode("utf-8")
+            can_remove_reuse = reuse_path.exists() and reuse_path.read_bytes() == generated_reuse
+            if component.exists() and component.read_bytes() == root_license.read_bytes() and (not reuse_path.exists() or can_remove_reuse):
+                removals.append(component)
+                lic["supporting_files"] = []
+            elif component.exists():
+                lic["supporting_files"] = [{
+                    "path": f"LICENSES/{expression}.txt",
+                    "spdx_id": expression,
+                    "sha256": sha256_file(component),
+                }]
+            else:
+                lic["supporting_files"] = []
+
+        for duplicate, canonical in [
+            (base / "LICENSE-MIT", base / "LICENSES" / "MIT.txt"),
+            (base / "LICENSE-APACHE", base / "LICENSES" / "Apache-2.0.txt"),
+        ]:
+            if not duplicate.exists():
+                continue
+            if canonical.exists() and duplicate.read_bytes() == canonical.read_bytes():
+                removals.append(duplicate)
+            else:
+                preserved.append(duplicate)
+
+        notice_path = base / "NOTICE"
+        if notice_path.exists():
+            expected_notice = _render_open_notice_from_passport(d, year)
+            if notice_path.read_bytes() == expected_notice:
+                removals.append(notice_path)
+            else:
+                preserved.append(notice_path)
+
+        reuse_path = base / "REUSE.toml"
+        if reuse_path.exists():
+            expected_reuse = _render_open_reuse(
+                year,
+                str(project.get("copyright_holder", "")),
+                str(expression),
+            ).encode("utf-8")
+            if reuse_path.read_bytes() == expected_reuse:
+                removals.append(reuse_path)
+            else:
+                preserved.append(reuse_path)
+
+        snippet_path = base / "README-LICENSING.md"
+        if snippet_path.exists():
+            expected = (ROOT / "templates" / "project" / "README-LICENSING-OPEN.md").read_text(encoding="utf-8")
+            expected = expected.replace("REPLACE_WITH_SPDX_EXPRESSION", str(expression)).encode("utf-8")
+            if snippet_path.read_bytes() == expected:
+                removals.append(snippet_path)
+            else:
+                preserved.append(snippet_path)
+
+    elif profile == "source":
+        root_license = base / "LICENSE"
+        if not root_license.exists() or root_license.read_bytes() != CANONICAL.read_bytes():
+            print("ERROR: Source project root LICENSE is not the canonical candidate", file=sys.stderr)
+            return 2
+        lic["sha256"] = sha256_file(root_license)
+        d.setdefault("provenance", {})["legal_text_digest"] = lic["sha256"]
+        reuse_copy = base / "LICENSES" / f"{SPDX_REF}.txt"
+        reuse_path = base / "REUSE.toml"
+        expected_reuse = _render_source_reuse_from_passport(d, year)
+        if reuse_path.exists() and reuse_path.read_bytes() == expected_reuse:
+            removals.append(reuse_path)
+            if reuse_copy.exists() and reuse_copy.read_bytes() == root_license.read_bytes():
+                removals.append(reuse_copy)
+                lic["supporting_files"] = []
+        notice_path = base / "NOTICE"
+        if notice_path.exists():
+            expected_notice = _render_source_notice_from_passport(d, year)
+            if notice_path.read_bytes() == expected_notice:
+                removals.append(notice_path)
+            else:
+                preserved.append(notice_path)
+    else:
+        print(f"ERROR: compact-project does not support profile {profile!r}", file=sys.stderr)
+        return 2
+
+    updates[passport_path] = (json.dumps(d, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+    # Keep plan deterministic and avoid trying to remove paths that are also updated.
+    removals = sorted({p for p in removals if p not in updates}, key=lambda p: p.as_posix())
+
+    print(f"Kiyoshima compact layout plan — {base}")
+    for path in sorted(updates, key=lambda p: p.as_posix()):
+        action = "update" if path.exists() else "create"
+        print(f"  {action}: {path.relative_to(base)}")
+    for path in removals:
+        print(f"  remove generated/redundant: {path.relative_to(base)}")
+    for path in sorted(set(preserved), key=lambda p: p.as_posix()):
+        print(f"  preserve customized file: {path.relative_to(base)}")
+
+    if not args.apply:
+        print("dry-run only; re-run with --apply to make these changes")
+        return 0
+
+    touched = list(updates) + removals
+    backup = _backup_project_paths(base, touched)
+    for path, data in updates.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    for path in removals:
+        if path.exists() and path.is_file():
+            path.unlink()
+    licenses_dir = base / "LICENSES"
+    if licenses_dir.exists() and licenses_dir.is_dir() and not any(licenses_dir.iterdir()):
+        licenses_dir.rmdir()
+
+    post_errors = project_errors(base)
+    if post_errors:
+        for error in post_errors:
+            print(f"ERROR after compaction: {error}", file=sys.stderr)
+        print(f"backup: {backup}", file=sys.stderr)
+        return 1
+    print(f"backup: {backup}")
+    print("post-compaction verification: OK")
+    return 0
 
 def cmd_query_right(args):
     base = pathlib.Path(args.path).resolve()
@@ -1163,23 +1492,122 @@ def cmd_status(args):
         print("finalization blockers: none detected locally")
     return 0 if not errors else 1
 
+def _cargo_member_manifests(base: pathlib.Path, root_data: dict) -> list[pathlib.Path]:
+    workspace = root_data.get("workspace")
+    if not isinstance(workspace, dict):
+        return []
+    manifests = []
+    seen = set()
+    for pattern in workspace.get("members", []) or []:
+        if not isinstance(pattern, str):
+            continue
+        for match in base.glob(pattern):
+            candidate = match / "Cargo.toml" if match.is_dir() else match
+            if candidate.name != "Cargo.toml" or not candidate.is_file():
+                continue
+            candidate = candidate.resolve()
+            if candidate not in seen:
+                seen.add(candidate)
+                manifests.append(candidate)
+    return sorted(manifests)
+
+
+def _cargo_package_license_warning(
+    manifest: pathlib.Path,
+    data: dict,
+    expected: str,
+    workspace_license: str | None,
+    base: pathlib.Path,
+) -> list[str]:
+    package = data.get("package")
+    if not isinstance(package, dict):
+        return []
+    rel = manifest.relative_to(base).as_posix()
+    value = package.get("license")
+    if isinstance(value, str):
+        if value != expected:
+            return [f"{rel}: package.license is {value!r}, expected {expected!r}"]
+        return []
+    if isinstance(value, dict) and value.get("workspace") is True:
+        if workspace_license != expected:
+            return [f"{rel}: license.workspace=true but workspace.package.license is not {expected!r}"]
+        return []
+    if package.get("license-file"):
+        return [f"{rel}: uses package.license-file; standard Kiyoshima Open projects should prefer package.license = {expected!r}"]
+    return [f"{rel}: package license metadata is missing; add license = {expected!r} or inherit it from workspace.package"]
+
+
+def cargo_license_warnings(base: pathlib.Path, expected: str) -> list[str]:
+    cargo = base / "Cargo.toml"
+    if not cargo.exists() or tomllib is None:
+        return []
+    try:
+        root_data = tomllib.loads(cargo.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return [f"Cargo.toml could not be parsed for license metadata: {exc}"]
+
+    workspace = root_data.get("workspace")
+    workspace_license = None
+    if isinstance(workspace, dict):
+        package_defaults = workspace.get("package")
+        if isinstance(package_defaults, dict) and isinstance(package_defaults.get("license"), str):
+            workspace_license = package_defaults["license"]
+
+    warnings = _cargo_package_license_warning(cargo, root_data, expected, workspace_license, base)
+    for manifest in _cargo_member_manifests(base, root_data):
+        try:
+            data = tomllib.loads(manifest.read_text(encoding="utf-8"))
+        except Exception as exc:
+            warnings.append(f"{manifest.relative_to(base).as_posix()}: could not parse Cargo manifest: {exc}")
+            continue
+        warnings.extend(_cargo_package_license_warning(manifest, data, expected, workspace_license, base))
+    return warnings
+
+
+def project_warnings(base: pathlib.Path) -> list[str]:
+    passport_path = base / PASSPORT_NAME
+    if not passport_path.exists():
+        return []
+    try:
+        d = load_json(passport_path)
+    except Exception:
+        return []
+    warnings = []
+    if d.get("profile") == "open":
+        expression = d.get("license", {}).get("spdx_expression")
+        if isinstance(expression, str):
+            warnings.extend(cargo_license_warnings(base, expression))
+        for name in ["LICENSE-MIT", "LICENSE-APACHE"]:
+            if (base / name).exists():
+                warnings.append(f"legacy redundant file {name} is present; run compact-project")
+        if (base / "README-LICENSING.md").exists():
+            warnings.append("generated README-LICENSING.md is at project root; prefer README/docs or remove it after merging")
+    return warnings
+
+
 def cmd_doctor(args):
     base = pathlib.Path(args.path).resolve()
     is_framework = (base / "registry" / "releases.json").exists() and (base / "tools" / "klicense.py").exists()
     if is_framework:
         errors = framework_errors()
+        warnings = []
         kind = "framework"
     else:
         errors = project_errors(base)
+        warnings = project_warnings(base) if not errors else []
         kind = "project"
     print(f"Kiyoshima doctor — {kind}: {base}")
-    if not errors:
-        print("status: healthy")
-        return 0
-    print(f"status: {len(errors)} issue(s)")
-    for e in errors:
-        print(f"- {e}")
-    return 1
+    if errors:
+        print(f"status: {len(errors)} issue(s)")
+        for e in errors:
+            print(f"- ERROR: {e}")
+        return 1
+    print("status: healthy")
+    if warnings:
+        print("recommendations:")
+        for warning in warnings:
+            print(f"- {warning}")
+    return 0
 
 
 def ignored(path: pathlib.Path) -> bool:
@@ -1460,9 +1888,17 @@ def main():
     s.add_argument("--commercial-contact", help="Optional dedicated commercial/organizational request URL.")
     s.add_argument("--ai-contact", help="Optional dedicated AI/model-training request URL.")
     s.add_argument("--evaluation-contact", help="Optional dedicated organization-evaluation extension URL.")
+    s.add_argument("--reuse", action="store_true", help="Opt in to REUSE.toml and duplicate LICENSES/ copies where needed.")
+    s.add_argument("--notice", action="store_true", help="Opt in to a project NOTICE file. Not generated by default.")
+    s.add_argument("--readme-snippet", help="Optional project-relative path for a generated licensing snippet, e.g. docs/README-LICENSING.md.")
     s.add_argument("--dry-run", action="store_true")
     s.add_argument("--force", action="store_true")
     s.set_defaults(func=cmd_init_project)
+
+    s = sub.add_parser("compact-project", help="Migrate generated Kiyoshima project licensing to the lean layout with a backup.")
+    s.add_argument("path", nargs="?", default=".")
+    s.add_argument("--apply", action="store_true", help="Apply the compaction. Without this flag, only print the plan.")
+    s.set_defaults(func=cmd_compact_project)
 
     s = sub.add_parser("sync-project", help="Safely sync an existing Kiyoshima Source project to this framework candidate, with backups.")
     s.add_argument("path")

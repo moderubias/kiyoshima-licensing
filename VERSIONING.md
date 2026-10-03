@@ -5,7 +5,7 @@ independent.
 
 - `Kiyoshima Source License 1.0` — legal version; still release-candidate rc.3.
 - `Kiyoshima License Passport schema 1.3` — license-agnostic machine metadata.
-- `Kiyoshima Licensing Framework 1.2.0-rc1` — tooling/docs/framework candidate.
+- `Kiyoshima Licensing Framework 1.2.0-rc2` — tooling/docs/framework candidate.
 
 ## Legal version rule
 
@@ -24,4 +24,4 @@ Source profile is declared.
 ## Framework rule
 
 Framework tooling/docs may evolve independently from the Source legal text.
-Framework 1.2.0-rc1 leaves Source rc.3 legal bytes unchanged.
+Framework 1.2.0-rc2 leaves Source rc.3 legal bytes unchanged and changes only tooling/project-layout defaults.

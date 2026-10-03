@@ -19,7 +19,8 @@ Current Kiyoshima Source 1.0 candidate digest:
 
 `sha256:c3c5a834df1b0ef65b076aa4c8a233be1a17005016f60f6978a44ce0a17a6c85`
 
-See `REUSE.toml` and `LICENSES/` for repository file licensing. Generated Open
-projects receive their own standard `LICENSES/` entries; those license texts are
-not added to this framework repository's `LICENSES/` unless the framework itself
-actually uses them.
+See `REUSE.toml` and `LICENSES/` for this framework repository's file licensing.
+Generated projects use a lean layout by default: single standard licenses live in
+root `LICENSE`; compound expressions such as `MIT OR Apache-2.0` place their full
+component texts under project `LICENSES/`. REUSE metadata is opt-in for generated
+projects.

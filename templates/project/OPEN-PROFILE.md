@@ -11,3 +11,8 @@ klicense init-project . --profile open --open-license Apache-2.0 \
   --name YourProject --repository https://github.com/owner/repo \
   --holder "Copyright Holder"
 ```
+
+
+By default the CLI writes only the files needed for the selected expression.
+Use `--reuse`, `--notice`, or `--readme-snippet PATH` only when those additional
+artifacts are wanted.

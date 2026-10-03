@@ -9,8 +9,7 @@ for organization-specific permission.
 The Kiyoshima profile is metadata/tooling. The controlling legal license remains
 its standard SPDX license. The CLI currently generates:
 
-- `Apache-2.0` — useful default when an explicit patent grant and NOTICE model are
-  desirable;
+- `Apache-2.0` — useful default when an explicit patent grant is desirable; a project `NOTICE` file is optional and should be created only when there are notices worth carrying;
 - `MIT` — minimal permissive terms;
 - `MIT OR Apache-2.0` — recipient chooses either license.
 

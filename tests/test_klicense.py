@@ -52,6 +52,7 @@ class KlicenseTests(unittest.TestCase):
                 name="OpenApache", kind="library", repository="https://example.invalid/open-apache",
                 holder="Example Holder", contact=None, commercial_contact=None,
                 ai_contact=None, evaluation_contact=None, dry_run=False, force=False,
+                reuse=False, notice=False, readme_snippet=None,
             )
             self.assertEqual(k.cmd_init_project(args), 0)
             self.assertEqual(k.project_errors(base), [])
@@ -59,7 +60,11 @@ class KlicenseTests(unittest.TestCase):
             self.assertEqual(d["profile"], "open")
             self.assertEqual(d["license"]["spdx_expression"], "Apache-2.0")
             self.assertNotIn("canonical_id", d["license"])
-            self.assertEqual((base / "LICENSE").read_bytes(), (base / "LICENSES" / "Apache-2.0.txt").read_bytes())
+            self.assertEqual((base / "LICENSE").read_bytes(), k.APACHE.read_bytes())
+            self.assertFalse((base / "LICENSES").exists())
+            self.assertFalse((base / "NOTICE").exists())
+            self.assertFalse((base / "REUSE.toml").exists())
+            self.assertFalse((base / "README-LICENSING.md").exists())
             self.assertNotIn("commercial", d["permission_requests"])
 
     def test_open_dual_init_and_verify(self):
@@ -70,16 +75,38 @@ class KlicenseTests(unittest.TestCase):
                 name="OpenDual", kind="library", repository="https://example.invalid/open-dual",
                 holder="Example Holder", contact=None, commercial_contact=None,
                 ai_contact=None, evaluation_contact=None, dry_run=False, force=False,
+                reuse=False, notice=False, readme_snippet=None,
             )
             self.assertEqual(k.cmd_init_project(args), 0)
             self.assertEqual(k.project_errors(base), [])
             d = k.load_json(base / "KIYOSHIMA.json")
             self.assertEqual(d["license"]["spdx_expression"], "MIT OR Apache-2.0")
-            self.assertEqual((base / "LICENSE-MIT").read_bytes(), (base / "LICENSES" / "MIT.txt").read_bytes())
-            self.assertEqual((base / "LICENSE-APACHE").read_bytes(), (base / "LICENSES" / "Apache-2.0.txt").read_bytes())
-            self.assertIn(b"Kiyoshima Open Profile", (base / "LICENSE").read_bytes())
+            self.assertTrue((base / "LICENSES" / "MIT.txt").exists())
+            self.assertTrue((base / "LICENSES" / "Apache-2.0.txt").exists())
+            self.assertFalse((base / "LICENSE-MIT").exists())
+            self.assertFalse((base / "LICENSE-APACHE").exists())
+            self.assertFalse((base / "NOTICE").exists())
+            self.assertFalse((base / "REUSE.toml").exists())
+            root = (base / "LICENSE").read_bytes()
+            self.assertIn(b"dual-licensed at your option", root)
+            self.assertLess(len(root), 1024)
 
     def test_open_supporting_license_tamper_fails(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = pathlib.Path(td) / "open-dual"
+            args = argparse.Namespace(
+                path=str(base), profile="open", open_license="MIT OR Apache-2.0",
+                name="OpenDual", kind="library", repository="https://example.invalid/open-dual",
+                holder="Example Holder", contact=None, commercial_contact=None,
+                ai_contact=None, evaluation_contact=None, dry_run=False, force=False,
+                reuse=False, notice=False, readme_snippet=None,
+            )
+            self.assertEqual(k.cmd_init_project(args), 0)
+            (base / "LICENSES" / "MIT.txt").write_text("tampered\n")
+            errors = k.project_errors(base)
+            self.assertTrue(any("supporting license hash mismatch" in e for e in errors))
+
+    def test_open_reuse_is_opt_in(self):
         with tempfile.TemporaryDirectory() as td:
             base = pathlib.Path(td) / "open-mit"
             args = argparse.Namespace(
@@ -87,11 +114,120 @@ class KlicenseTests(unittest.TestCase):
                 name="OpenMIT", kind="library", repository="https://example.invalid/open-mit",
                 holder="Example Holder", contact=None, commercial_contact=None,
                 ai_contact=None, evaluation_contact=None, dry_run=False, force=False,
+                reuse=True, notice=False, readme_snippet="docs/README-LICENSING.md",
             )
             self.assertEqual(k.cmd_init_project(args), 0)
-            (base / "LICENSES" / "MIT.txt").write_text("tampered\n")
-            errors = k.project_errors(base)
-            self.assertTrue(any("supporting license hash mismatch" in e for e in errors))
+            self.assertTrue((base / "REUSE.toml").exists())
+            self.assertTrue((base / "LICENSES" / "MIT.txt").exists())
+            self.assertTrue((base / "docs" / "README-LICENSING.md").exists())
+            self.assertFalse((base / "NOTICE").exists())
+            self.assertEqual(k.project_errors(base), [])
+
+    def test_compact_project_removes_legacy_generated_clutter(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = pathlib.Path(td) / "legacy-open"
+            args = argparse.Namespace(
+                path=str(base), profile="open", open_license="MIT OR Apache-2.0",
+                name="LegacyOpen", kind="library", repository="https://example.invalid/legacy-open",
+                holder="Example Holder", contact=None, commercial_contact=None,
+                ai_contact=None, evaluation_contact=None, dry_run=False, force=False,
+                reuse=True, notice=True, readme_snippet=None,
+            )
+            self.assertEqual(k.cmd_init_project(args), 0)
+            mit = (base / "LICENSES" / "MIT.txt").read_bytes()
+            apache = (base / "LICENSES" / "Apache-2.0.txt").read_bytes()
+            legacy_root = (
+                b"Kiyoshima Open Profile \xe2\x80\x94 Dual-License Notice\n\n"
+                b"You may use this project under your choice of either the MIT License or the Apache License, Version 2.0.\n\n"
+                b"SPDX-License-Identifier: MIT OR Apache-2.0\n\n"
+                b"The Kiyoshima Open profile and KIYOSHIMA.json are metadata/tooling conventions. They do not modify either license.\n\n"
+                b"===== MIT License =====\n\n" + mit +
+                b"\n===== Apache License 2.0 =====\n\n" + apache
+            )
+            (base / "LICENSE").write_bytes(legacy_root)
+            (base / "LICENSE-MIT").write_bytes(mit)
+            (base / "LICENSE-APACHE").write_bytes(apache)
+            d = k.load_json(base / "KIYOSHIMA.json")
+            d["license"]["sha256"] = k.hashlib.sha256(legacy_root).hexdigest()
+            d["provenance"]["legal_text_digest"] = d["license"]["sha256"]
+            k.dump_json(base / "KIYOSHIMA.json", d)
+            self.assertEqual(k.project_errors(base), [])
+
+            result = k.cmd_compact_project(argparse.Namespace(path=str(base), apply=True))
+            self.assertEqual(result, 0)
+            self.assertFalse((base / "LICENSE-MIT").exists())
+            self.assertFalse((base / "LICENSE-APACHE").exists())
+            self.assertFalse((base / "NOTICE").exists())
+            self.assertFalse((base / "REUSE.toml").exists())
+            self.assertTrue((base / "LICENSES" / "MIT.txt").exists())
+            self.assertTrue((base / "LICENSES" / "Apache-2.0.txt").exists())
+            self.assertLess((base / "LICENSE").stat().st_size, 1024)
+            self.assertEqual(k.project_errors(base), [])
+            backups = list(pathlib.Path(td).glob("legacy-open.kiyoshima-backup-*"))
+            self.assertEqual(len(backups), 1)
+
+
+    def test_source_init_is_lean_by_default(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = pathlib.Path(td) / "source-lean"
+            args = argparse.Namespace(
+                path=str(base), profile="source", open_license="Apache-2.0",
+                name="SourceLean", kind="application", repository="https://example.invalid/source",
+                holder="Example Holder", contact="https://example.invalid/licensing",
+                commercial_contact=None, ai_contact=None, evaluation_contact=None,
+                dry_run=False, force=False, reuse=False, notice=False, readme_snippet=None,
+            )
+            self.assertEqual(k.cmd_init_project(args), 0)
+            self.assertEqual(k.project_errors(base), [])
+            self.assertTrue((base / "LICENSE").exists())
+            self.assertTrue((base / "KIYOSHIMA.json").exists())
+            self.assertFalse((base / "LICENSES").exists())
+            self.assertFalse((base / "NOTICE").exists())
+            self.assertFalse((base / "REUSE.toml").exists())
+            d = k.load_json(base / "KIYOSHIMA.json")
+            self.assertEqual(d["license"]["supporting_files"], [])
+
+    def test_doctor_checks_cargo_workspace_license_metadata(self):
+        if k.tomllib is None:
+            self.skipTest("tomllib unavailable")
+        with tempfile.TemporaryDirectory() as td:
+            base = pathlib.Path(td) / "rust-workspace"
+            args = argparse.Namespace(
+                path=str(base), profile="open", open_license="MIT OR Apache-2.0",
+                name="RustWorkspace", kind="library", repository="https://example.invalid/rust-workspace",
+                holder="Example Holder", contact=None, commercial_contact=None,
+                ai_contact=None, evaluation_contact=None, dry_run=False, force=False,
+                reuse=False, notice=False, readme_snippet=None,
+            )
+            self.assertEqual(k.cmd_init_project(args), 0)
+            (base / "crates" / "a").mkdir(parents=True)
+            (base / "Cargo.toml").write_text(
+                '[workspace]\nmembers = ["crates/*"]\n\n[workspace.package]\nlicense = "MIT OR Apache-2.0"\n'
+            )
+            (base / "crates" / "a" / "Cargo.toml").write_text(
+                '[package]\nname = "a"\nversion = "0.1.0"\nlicense.workspace = true\n'
+            )
+            self.assertEqual(k.cargo_license_warnings(base, "MIT OR Apache-2.0"), [])
+            (base / "crates" / "a" / "Cargo.toml").write_text(
+                '[package]\nname = "a"\nversion = "0.1.0"\n'
+            )
+            warnings = k.cargo_license_warnings(base, "MIT OR Apache-2.0")
+            self.assertTrue(any("package license metadata is missing" in w for w in warnings))
+
+    def test_compact_preserves_custom_notice(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = pathlib.Path(td) / "custom-notice"
+            args = argparse.Namespace(
+                path=str(base), profile="open", open_license="MIT OR Apache-2.0",
+                name="CustomNotice", kind="library", repository="https://example.invalid/custom-notice",
+                holder="Example Holder", contact=None, commercial_contact=None,
+                ai_contact=None, evaluation_contact=None, dry_run=False, force=False,
+                reuse=False, notice=True, readme_snippet=None,
+            )
+            self.assertEqual(k.cmd_init_project(args), 0)
+            (base / "NOTICE").write_text("custom legal notice\n")
+            self.assertEqual(k.cmd_compact_project(argparse.Namespace(path=str(base), apply=True)), 0)
+            self.assertEqual((base / "NOTICE").read_text(), "custom legal notice\n")
 
     def test_source_identity_is_required_by_validator(self):
         with tempfile.TemporaryDirectory() as td:

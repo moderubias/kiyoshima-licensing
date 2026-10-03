@@ -9,4 +9,4 @@ standard license terms. `KIYOSHIMA.json` provides machine-readable licensing
 metadata for tooling, CI, IDEs, agents, and policy engines; the legal license
 text remains controlling.
 
-See `LICENSE`, `LICENSES/`, and `KIYOSHIMA.json`.
+See `LICENSE` and `KIYOSHIMA.json`. Compound expressions may also keep their complete component texts in `LICENSES/`.
