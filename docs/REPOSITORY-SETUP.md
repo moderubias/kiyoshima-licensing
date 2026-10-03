@@ -4,11 +4,11 @@ Recommended repository name: `kiyoshima-licensing`.
 
 Recommended description:
 
-> Machine-readable source-available licensing: free for individuals, learning and qualifying research; organizations evaluate, then ask. AI/TDM semantics, grants, provenance and monitoring.
+> Machine-readable software licensing profiles: standard Open Source or Kiyoshima Source, with Passport validation, AI/TDM semantics, grants and provenance.
 
 Recommended topics:
 
-`kiyoshima-source`, `source-available`, `software-licensing`, `machine-readable-licensing`, `ai-licensing`, `license-passport`, `spdx`, `reuse`, `provenance`, `software-law`
+`kiyoshima-open`, `kiyoshima-source`, `source-available`, `software-licensing`, `machine-readable-licensing`, `ai-licensing`, `license-passport`, `spdx`, `reuse`, `provenance`, `software-law`
 
 Recommended settings:
 

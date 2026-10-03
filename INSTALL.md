@@ -1,63 +1,100 @@
 # Install / upgrade
 
-The ZIP for this framework is intentionally **root-layout**: extract it directly into the root of the canonical licensing repository.
+## Upgrade Framework 1.1.0-rc2 to 1.2.0-rc1 from Downloads
 
-## Upgrade the current `moderubias/licensing` repository
+This overlay archive is designed to be extracted over the existing framework
+clone. It does not contain `.git` or `.venv`.
 
-Commit or stash any work first. Recommended:
+If `klicense` is already installed with `tools/install-cli.sh`, it is normally a
+symlink to `tools/klicense.py` inside the framework clone. Updating that clone
+therefore updates the command automatically; reinstalling the symlink is not
+required.
+
+Locate the clone through the installed command:
+
+```bash
+KLICENSE_BIN="$(command -v klicense)"
+KLICENSE_SCRIPT="$(readlink -f "$KLICENSE_BIN")"
+KLICENSE_ROOT="$(cd "$(dirname "$KLICENSE_SCRIPT")/.." && pwd)"
+printf 'klicense: %s\nframework: %s\n' "$KLICENSE_BIN" "$KLICENSE_ROOT"
+cd "$KLICENSE_ROOT"
+```
+
+Before overwriting files:
 
 ```bash
 git status
-git switch -c licensing-framework-1.1-rc2
-unzip -o /path/to/kiyoshima-licensing-framework-1.1.0-rc2.zip -d .
-bash tools/migrate-from-framework-1.0.sh
-bash tools/migrate-from-framework-1.0.sh --apply
-python tools/klicense.py verify-framework
-python -m unittest discover -s tests -v
-git status
 ```
 
-The first migration invocation is a dry run. The `--apply` invocation removes only known obsolete files left by the earlier bundle. `verify-framework` is strict and will fail if stale/unexpected files remain in the framework manifest.
-
-When the diff is correct:
+Commit/stash unrelated work first. Then create an upgrade branch and a local
+filesystem backup:
 
 ```bash
-git add -A
-git commit -S -m "Harden Kiyoshima Licensing Framework 1.1.0-rc2"
-git push -u origin licensing-framework-1.1-rc2
+git switch -c licensing-framework-1.2-rc1
+BACKUP="../kiyoshima-licensing.backup-$(date -u +%Y%m%dT%H%M%SZ)"
+cp -a . "$BACKUP"
+echo "$BACKUP"
 ```
 
-Merge after review/CI. Then apply repository metadata/rename from the default branch:
+Apply the archive that was downloaded to `~/Downloads`:
 
 ```bash
-bash tools/bootstrap-github.sh
-bash tools/bootstrap-github.sh --apply --rename
+unzip -o ~/Downloads/kiyoshima-licensing-framework-1.2.0-rc1-overlay.zip -d .
 ```
 
-Configure the branch/tag rulesets described in `docs/REPOSITORY-SETUP.md` manually after the repository rename.
-
-## Fresh repository
-
-For a fresh empty repository, extract the ZIP into the repository root and run:
+Verify the installed command and framework:
 
 ```bash
-python tools/klicense.py verify-framework
-python -m unittest discover -s tests -v
+klicense --version
+klicense verify-framework
+python3 -m unittest discover -s tests -v
+python3 -m py_compile tools/klicense.py
+git status --short
 ```
 
-No migration cleanup is needed.
+Expected version output begins with:
 
-## Optional CLI command
+```text
+klicense 1.2.0-rc1 (Passport schema 1.3)
+```
+
+If `command -v klicense` no longer resolves to this clone, reinstall only the
+symlink:
 
 ```bash
 bash tools/install-cli.sh
-klicense policy-summary .
 ```
 
-This installs only a symlink in `~/.local/bin` (or `$XDG_BIN_HOME`) pointing back to this clone.
+## Existing Kiyoshima Source projects
 
-## Important release state
+Framework 1.2.0-rc1 does **not** change Source 1.0 rc.3 legal bytes. To move an
+existing Source project's Passport to schema 1.3, preview and then apply:
 
-This bundle is a **hardened release candidate**, not the frozen legal `source-v1.0` release. `python tools/klicense.py release-check` is expected to fail until software/IP legal review is complete and the explicit finalization checklist in `docs/FORMALIZATION.md` / `docs/OPERATIONS.md` has been performed.
+```bash
+klicense sync-project /path/to/project --dry-run
+klicense sync-project /path/to/project
+```
 
-Do not create the final `source-v1.0` tag merely to make that command pass.
+`sync-project` creates an external timestamped backup before writing project
+licensing files.
+
+For a non-Source Passport that is already manually configured on schema
+1.0/1.1/1.2:
+
+```bash
+klicense upgrade-passport /path/to/project/KIYOSHIMA.json --dry-run
+klicense upgrade-passport /path/to/project/KIYOSHIMA.json
+klicense verify-project /path/to/project
+```
+
+## Fresh framework clone
+
+The overlay is intended for the existing 1.1.0-rc2 tree. For a fresh clone, use
+the complete repository/release rather than treating the overlay as a standalone
+source distribution.
+
+## Release state
+
+Kiyoshima Source 1.0 remains a legal release candidate. `klicense release-check`
+is expected to fail until software/IP legal review and the explicit final freeze
+are completed. Do not create `source-v1.0` merely to make the command pass.

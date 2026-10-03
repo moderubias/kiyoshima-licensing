@@ -1,26 +1,26 @@
 # Brand system
 
-Use full Kiyoshima names in public surfaces. Short acronyms such as KSL may be used conversationally but are not canonical identifiers.
+Preferred public names:
 
-Preferred display:
+- **Kiyoshima Open** — profile/protocol layer over a standard controlling OSS license;
+- **Kiyoshima Source 1.0** — custom source-available license;
+- **Kiyoshima Commercial**;
+- **Kiyoshima Grant**;
+- **Kiyoshima AI 1.0**;
+- **Kiyoshima Contributor 1.0**;
+- **Kiyoshima License Passport**.
 
-- **Kiyoshima Source 1.0**
-- **Kiyoshima Commercial**
-- **Kiyoshima Grant**
-- **Kiyoshima AI 1.0**
-- **Kiyoshima Contributor 1.0**
-- **Kiyoshima License Passport**
+Canonical Source identifier: `Kiyoshima-Source-1.0`
+SPDX reference: `LicenseRef-Kiyoshima-Source-1.0`
 
-Canonical license identifier:
-
-`Kiyoshima-Source-1.0`
-
-SPDX reference:
-
-`LicenseRef-Kiyoshima-Source-1.0`
-
-Preferred one-line policy summary:
+Source one-line summary:
 
 > Free for people. Free for learning. Free for qualifying research. Organizations evaluate, then ask.
 
-Do not market the Source profile as open source. Use `source-available`.
+Open one-line summary:
+
+> Kiyoshima profile and machine-readable Passport; standard SPDX license controls.
+
+Do not call Kiyoshima Source “open source”. Use `source-available`. Do not call
+MIT, Apache-2.0, or their combination a “Kiyoshima license”; identify them by
+their standard names and use Kiyoshima only for the profile/protocol layer.

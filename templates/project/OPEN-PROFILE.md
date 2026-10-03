@@ -1,7 +1,13 @@
-# Open profile
+# Kiyoshima Open profile
 
-For foundational libraries where adoption is the primary objective, prefer a standard ecosystem expression such as:
+Kiyoshima Open is a profile and machine-readable protocol layer, not a renamed
+software license. Use a standard controlling SPDX expression such as `MIT`,
+`Apache-2.0`, or `MIT OR Apache-2.0`.
 
-`MIT OR Apache-2.0`
+Example:
 
-Do not relabel MIT or Apache-2.0 as a Kiyoshima license. The Kiyoshima Framework profile is simply `Open`; the underlying licenses remain their standard licenses.
+```bash
+klicense init-project . --profile open --open-license Apache-2.0 \
+  --name YourProject --repository https://github.com/owner/repo \
+  --holder "Copyright Holder"
+```

@@ -1,22 +1,27 @@
 # Versioning
 
-The framework version, Passport schema version, and legal-license version are independent.
+The framework version, Passport schema version, and legal-license version are
+independent.
 
-- `Kiyoshima Source License 1.0` — legal version; currently a release candidate until explicitly frozen.
-- `Kiyoshima License Passport schema 1.2` — machine metadata schema.
-- `Kiyoshima Licensing Framework 1.1.0-rc2` — tooling/docs/framework release candidate.
+- `Kiyoshima Source License 1.0` — legal version; still release-candidate rc.3.
+- `Kiyoshima License Passport schema 1.3` — license-agnostic machine metadata.
+- `Kiyoshima Licensing Framework 1.2.0-rc1` — tooling/docs/framework candidate.
 
 ## Legal version rule
 
-Once `Kiyoshima Source License 1.0` is declared final and released as `source-v1.0`, its canonical bytes are immutable. Any later textual change, including an editorial change that could affect matching or interpretation, requires a new legal version and a new digest.
+Once Kiyoshima Source 1.0 is declared final and released as `source-v1.0`, its
+canonical legal bytes are immutable. Textual or semantic changes require a new
+legal version and digest. Framework or Passport changes do not silently
+relicense existing software.
 
-Projects remain on the exact legal version they declared unless their copyright holder affirmatively relicenses them.
+## Passport rule
 
-## Framework version rule
+Passport schemas can evolve independently when machine metadata changes do not
+alter the controlling legal grant. Schema 1.3 removes Source-only assumptions
+from the generic protocol while preserving Source-specific validation when the
+Source profile is declared.
 
-Framework tooling/docs may evolve independently when they do not change the legal rights expressed by an already frozen legal version. Breaking machine-schema changes require a new schema version.
+## Framework rule
 
-Recommended tags after legal review:
-
-- `source-v1.0` — frozen legal text;
-- `framework-v1.1.0` — first stable hardened framework release.
+Framework tooling/docs may evolve independently from the Source legal text.
+Framework 1.2.0-rc1 leaves Source rc.3 legal bytes unchanged.

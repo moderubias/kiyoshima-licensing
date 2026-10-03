@@ -1,110 +1,134 @@
 # Kiyoshima Licensing Framework
 
-**Free for people. Free for learning. Free for qualifying research. Organizations evaluate, then ask.**
+**One licensing protocol, two public software profiles: standard Open Source or Kiyoshima Source.**
 
-Kiyoshima Licensing Framework is a source-available licensing system built around a stable legal instrument and a machine-readable rights protocol. It separates ordinary human/agent use from organizational production rights and model-improvement rights, while providing a direct path to request additional permission.
+Kiyoshima Licensing Framework combines legal instruments with a machine-readable
+License Passport (`KIYOSHIMA.json`). The Passport is license-agnostic: it can
+summarize a standard SPDX license expression or a Kiyoshima instrument without
+relabeling or modifying the controlling legal terms.
 
-The flagship legal instrument is **Kiyoshima Source License 1.0** (`Kiyoshima-Source-1.0`, SPDX reference `LicenseRef-Kiyoshima-Source-1.0`). This repository is the reference implementation and is itself Apache-2.0 for tooling and documentation; see `LICENSING.md`.
+The framework repository itself is Apache-2.0. The custom public legal instrument
+is **Kiyoshima Source License 1.0** (`LicenseRef-Kiyoshima-Source-1.0`), which
+remains a release candidate pending legal review.
 
-## The model
+## Model
 
 ```text
-legal instrument
-      ↓ controls
+controlling legal license / agreement
+              ↓
 Kiyoshima License Passport (KIYOSHIMA.json)
-      ↓ summarizes conservatively
+              ↓
 humans · agents · CI · IDEs · scanners · policy engines
-      ↓ when extra rights are needed
-Commercial / Grant / AI permission instruments
+              ↓
+optional permission / commercial / AI grant routes
 ```
 
-The machine layer can make restrictions and permission routes easier to discover. It can never silently expand the legal grant.
+The machine layer is informational. It may summarize rights and constraints but
+may not silently expand the legal grant.
 
 ## Profiles
 
-- **Open** — standard ecosystem licensing such as `MIT OR Apache-2.0` when frictionless adoption is the primary objective.
-- **Source** — Kiyoshima Source 1.0: broad individual freedom, qualifying education/research, limited organization evaluation, and separately licensed organizational production/commercial/hosted/model-improvement use.
-- **Commercial** — negotiated terms for organizations, proprietary distribution, SaaS, support, warranties, SLAs, and other scopes.
+- **Open** — Kiyoshima profile + standard ecosystem license. The CLI generates
+  `MIT`, `Apache-2.0`, or `MIT OR Apache-2.0`. Kiyoshima Open is not a separate
+  software license and does not modify those standard terms.
+- **Source** — Kiyoshima Source 1.0: broad individual use, qualifying education
+  and research, 30-day organization evaluation, and separate permission for
+  organization production/commercial/hosted/model-improvement use.
+- **Commercial** — negotiated terms for scopes that need warranties, SLAs,
+  indemnities, proprietary distribution, production rights, support, or other
+  negotiated obligations.
 
-## Instruments
+For the exact decision matrix, see `docs/RIGHTS-MATRIX.md` and
+`docs/PROFILES.md`.
 
-- **Kiyoshima Source 1.0** — public source-available software license.
-- **Kiyoshima Commercial** — negotiated organization/commercial agreement.
-- **Kiyoshima Grant** — targeted additional rights for a specific person or entity.
-- **Kiyoshima AI 1.0** — model-training, dataset, and model-improvement rights.
-- **Kiyoshima Contributor 1.0** — contributor copyright/patent grant preserving relicensing flexibility.
+## License Passport 1.3
 
-## License Passport
+Schema 1.3 removes Source-specific assumptions from the generic protocol layer.
+It supports:
 
-`KIYOSHIMA.json` is the project-local License Passport. Version 1.2 adds:
-
-- stable legal-text digest;
-- permission states for human and organizational use;
-- operational-AI versus model-improvement semantics;
-- explicit TDM/model-training rights reservations;
-- machine-discoverable permission-request routes;
-- conservative conflict behavior;
-- optional authenticated grant references;
-- normalized policy constraints such as evaluation duration and downstream-license semantics;
-- a stable protocol identity for agent/CI integrations.
-
-An automated system encountering missing, malformed, unknown, conflicting, or unauthenticated permission state must not infer extra rights.
+- arbitrary controlling SPDX expressions or custom `LicenseRef-*` instruments;
+- authoritative legal-file digest verification;
+- optional digests for supporting license files;
+- permission and AI-policy summaries;
+- explicit rights reservations when the controlling instrument has them;
+- permission-request routes;
+- conservative conflict/missing-value behavior;
+- profile-specific policy constraints instead of globally assuming the Source
+  profile's downstream-rights model.
 
 ## CLI
 
-The zero-dependency utility is `tools/klicense.py`.
+The utility is zero-dependency Python.
 
 ```bash
-python tools/klicense.py verify-framework
-python tools/klicense.py doctor .
-python tools/klicense.py status
-python tools/klicense.py init-project /path/to/project \
-  --name GutenMorgen \
-  --kind application \
-  --repository https://github.com/moderubias/GutenMorgen \
-  --holder "Akayo Kiyoshima" \
-  --contact https://github.com/moderubias/kiyoshima-licensing/issues
-python tools/klicense.py verify-project /path/to/project
-python tools/klicense.py sync-project /path/to/existing-project --dry-run
-python tools/klicense.py query-right /path/to/project organization_production_use
-python tools/klicense.py preflight /path/to/project model_training --json
-python tools/klicense.py verify-grant /path/to/KRG-2026-0001.record.json
-python tools/klicense.py export-tdm --origin https://example.com --rightsholder "Akayo Kiyoshima" --contact https://example.com/licensing --output-dir ./tdm-deploy
-python tools/klicense.py fingerprint /path/to/project
+klicense --version
+klicense verify-framework
+klicense status
 ```
 
-`init-project` is non-destructive by default and refuses to overwrite existing licensing files unless `--force` is supplied. `sync-project` upgrades an existing Kiyoshima Source project using an external backup before changing its legal bytes or Passport. See `docs/OPERATIONS.md` for the day-to-day workflow. Optionally run `tools/install-cli.sh` once to expose the executable as `klicense` through `~/.local/bin`.
+Create an unrestricted OSS project under Apache-2.0:
+
+```bash
+klicense init-project /path/to/project \
+  --profile open \
+  --open-license Apache-2.0 \
+  --name YourProject \
+  --kind library \
+  --repository https://github.com/owner/project \
+  --holder "Copyright Holder"
+```
+
+Use `--open-license MIT` or `--open-license "MIT OR Apache-2.0"` when that is
+the intended controlling legal expression.
+
+Create a Kiyoshima Source project:
+
+```bash
+klicense init-project /path/to/project \
+  --profile source \
+  --name YourProduct \
+  --kind application \
+  --repository https://github.com/owner/product \
+  --holder "Copyright Holder" \
+  --contact https://github.com/owner/product/issues
+```
+
+Then:
+
+```bash
+klicense verify-project /path/to/project
+klicense policy-summary /path/to/project
+klicense preflight /path/to/project organization_production_use --json
+```
+
+`init-project` refuses to overwrite licensing files unless `--force` is used.
+For existing Kiyoshima Source projects, `sync-project` creates an external backup
+before updating the Passport/legal files.
 
 ## Repository layout
 
-- `INSTALL.md` — safe fresh-install / upgrade procedure.
-- `LICENSE` — Apache-2.0 for this framework repository's code/docs/tooling.
-- `LICENSING.md` — repository licensing map.
-- `LICENSE-KIYOSHIMA-SOURCE-1.0.txt` — canonical Kiyoshima Source 1.0 candidate text.
-- `KIYOSHIMA.json` — reference License Passport.
+- `LICENSE` — Apache-2.0 for framework code/docs/tooling.
+- `LICENSE-KIYOSHIMA-SOURCE-1.0.txt` — Kiyoshima Source 1.0 candidate.
+- `KIYOSHIMA.json` — framework/reference Passport.
+- `machine/` — Passport/grant/registry schemas and TDM mapping.
+- `templates/project/` — Source/Open project templates.
+- `templates/licenses/` — standard-license generation templates.
 - `agreements/` — Commercial, Grant, AI, and Contributor instruments.
-- `machine/` — schemas, examples, protocol details, and TDM mapping guidance.
-- `registry/` — release, owned-project, public-grant, and adopter records.
-- `monitor/` — optional public-source monitoring queries.
-- `templates/project/` — project metadata templates; the CLI copies the canonical legal text directly.
-- `tools/klicense.py` — validator, initializer/synchronizer, rights-query interface, grant generator, fingerprint generator, registry helper, and monitor.
-- `docs/OPERATIONS.md` — day-to-day operator runbook.
-- `action.yml` — composite GitHub Action for project policy verification after a tagged release.
+- `tools/klicense.py` — initialization, validation, preflight, grants, registry,
+  fingerprinting, monitoring, and TDM tooling.
+- `docs/` — adoption, protocol, comparison, formalization, and operations docs.
 
 ## Status
 
-**Kiyoshima Source 1.0 remains a release candidate until legal review and an explicit freeze.** The candidate text must not be silently changed after a final `source-v1.0` release.
+Framework: **1.2.0-rc1**
+Passport schema: **1.3**
+Kiyoshima Source candidate: **1.0 rc.3**
 
-Kiyoshima Source is **source-available, not OSI open source**. Its organizational/commercial restrictions intentionally do not satisfy the Open Source Definition.
+Kiyoshima Source is source-available, not OSI Open Source. Its organization and
+commercial restrictions intentionally conflict with unrestricted Open Source use.
+The Source legal text is not being declared final until software/IP legal review
+and the freeze procedure in `docs/FORMALIZATION.md` are complete.
 
-Current candidate revision: **rc.3**
+Current Source candidate SHA-256:
 
-Current candidate legal-text digest:
-
-`sha256:c3c5a834df1b0ef65b076aa4c8a233be1a17005016f60f6978a44ce0a17a6c85`
-
-## Adoption
-
-Another developer may apply an exact, unmodified Kiyoshima Source 1.0 text to their own software without transferring ownership to Kiyoshima or joining any organization. The framework's Apache-2.0 tooling is intentionally available to companies, package tooling, IDEs, scanners, and AI-agent vendors that want to implement support for the License Passport protocol.
-
-Start with `docs/ADOPTION.md` and `docs/FORMALIZATION.md`.
+`c3c5a834df1b0ef65b076aa4c8a233be1a17005016f60f6978a44ce0a17a6c85`

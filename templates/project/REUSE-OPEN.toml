@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = ["**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "REPLACE_WITH_COPYRIGHT_NOTICE"
+SPDX-License-Identifier = "REPLACE_WITH_SPDX_EXPRESSION"

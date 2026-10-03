@@ -1,5 +1,17 @@
 # Changelog
 
+## Framework 1.2.0-rc1 — license-agnostic Open profile
+
+- Upgrades Kiyoshima License Passport to schema 1.3.
+- Removes Source-specific downstream-rights constraints from the generic Passport protocol.
+- Adds one-command Kiyoshima Open initialization using `MIT`, `Apache-2.0`, or `MIT OR Apache-2.0` without renaming those legal licenses.
+- Adds hashed supporting-license files to Passport metadata and verification.
+- Adds Open-profile REUSE/NOTICE/README templates and a canonical MIT generation template.
+- Makes Open AI preflight conservative: no extra Kiyoshima restriction, but standard license/applicable law still control.
+- Adds rights matrix and source-available comparison documentation.
+- Preserves Kiyoshima Source 1.0 rc.3 legal bytes unchanged.
+- Adds `klicense --version` and upgrades Source sync/passport migration to schema 1.3.
+
 ## Framework 1.1.0-rc2 — hardened candidate
 
 - Separates the framework repository's Apache-2.0 tooling/docs license from the Kiyoshima Source legal instrument.

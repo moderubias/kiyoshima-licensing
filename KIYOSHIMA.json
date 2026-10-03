@@ -1,7 +1,7 @@
 {
   "$schema": "./machine/schema/kiyoshima-passport.schema.json",
   "format": "Kiyoshima License Passport",
-  "schema_version": "1.2",
+  "schema_version": "1.3",
   "declaration_scope": "framework-canonical-license",
   "project": {
     "name": "Kiyoshima Licensing Framework",
@@ -17,7 +17,8 @@
     "authoritative_file": "LICENSE-KIYOSHIMA-SOURCE-1.0.txt",
     "legal_priority": "license-text-controls",
     "sha256": "c3c5a834df1b0ef65b076aa4c8a233be1a17005016f60f6978a44ce0a17a6c85",
-    "candidate_revision": "rc.3"
+    "candidate_revision": "rc.3",
+    "kind": "custom-license"
   },
   "repository_licensing": {
     "default_spdx_expression": "Apache-2.0",

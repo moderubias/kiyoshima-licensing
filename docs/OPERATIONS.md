@@ -37,23 +37,36 @@ python -m unittest discover -s tests -v
 python tools/klicense.py release-check
 ```
 
-## 3. Add Kiyoshima Source to a new project
+## 3. Initialize a new project
 
-Use the canonical CLI instead of copying an archive by hand:
+For an unrestricted OSS project:
 
 ```bash
-python /path/to/kiyoshima-licensing/tools/klicense.py init-project /path/to/project \
+klicense init-project /path/to/project \
+  --profile open \
+  --open-license Apache-2.0 \
+  --name PROJECT_NAME \
+  --kind library \
+  --repository https://github.com/OWNER/REPO \
+  --holder "COPYRIGHT HOLDER"
+```
+
+For a Kiyoshima Source product:
+
+```bash
+klicense init-project /path/to/project \
+  --profile source \
   --name PROJECT_NAME \
   --kind application \
   --repository https://github.com/OWNER/REPO \
   --holder "COPYRIGHT HOLDER" \
-  --contact https://github.com/OWNER/kiyoshima-licensing/issues
+  --contact https://github.com/OWNER/REPO/issues
 ```
 
 Then:
 
 ```bash
-python /path/to/kiyoshima-licensing/tools/klicense.py verify-project /path/to/project
+klicense verify-project /path/to/project
 ```
 
 Merge `README-LICENSING.md` into the project's main README. The generated file may remain as a reference or be removed after the merge.
@@ -79,7 +92,7 @@ The command backs up the affected licensing files outside the project directory 
 Humans, agents, CI, and policy tooling can query normalized state:
 
 ```bash
-python tools/klicense.py query-right /path/to/project organization_use
+python tools/klicense.py query-right /path/to/project organization_production_use
 python tools/klicense.py query-right /path/to/project model_training --json
 ```
 
@@ -106,6 +119,8 @@ python tools/klicense.py register-project \
   --repository https://github.com/moderubias/GutenMorgen \
   --profile source
 ```
+
+For an Open-profile project, record the controlling SPDX expression explicitly, for example `--profile open --license "MIT OR Apache-2.0"`. Commercial registry entries likewise require `--license` rather than silently inheriting the Source identifier.
 
 Commit the registry change. The registry is public metadata, not the source of legal rights.
 
@@ -184,12 +199,4 @@ Never edit the bytes of an already-final legal version. Publish a new legal vers
 
 ## 13. Framework repository upgrades
 
-When installing a newer framework bundle over the old 1.0 candidate repository, extract the new files and then run:
-
-```bash
-bash tools/migrate-from-framework-1.0.sh
-bash tools/migrate-from-framework-1.0.sh --apply
-python tools/klicense.py verify-framework
-```
-
-The cleanup script removes only known obsolete paths from the old bundle. Review `git status` before committing.
+For the 1.1.0-rc2 -> 1.2.0-rc1 overlay, follow `UPGRADE-1.2.0-rc1.md`. The already-installed `klicense` symlink normally continues to work because its target file is updated in place. Do not run the old 1.0 migration cleanup for this overlay.

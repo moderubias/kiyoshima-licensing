@@ -1,0 +1,11 @@
+PROJECT: [project name]
+COPYRIGHT: © [year] [copyright holder]
+CANONICAL SOURCE: [repository URL]
+KIYOSHIMA PROFILE: Open
+CONTROLLING SPDX EXPRESSION: [SPDX expression]
+
+Kiyoshima Open is a framework/profile declaration, not an additional software
+license. The standard license terms identified above control.
+
+This project may include third-party components under their own licenses. See
+dependency and attribution metadata where applicable.

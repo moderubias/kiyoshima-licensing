@@ -12,15 +12,18 @@ import urllib.request
 from datetime import datetime, timezone
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+FRAMEWORK_VERSION = "1.2.0-rc1"
 CANONICAL = ROOT / "LICENSE-KIYOSHIMA-SOURCE-1.0.txt"
 APACHE = ROOT / "LICENSES" / "Apache-2.0.txt"
+MIT_TEMPLATE = ROOT / "templates" / "licenses" / "MIT.txt.template"
 ROOT_LICENSE = ROOT / "LICENSE"
 PASSPORT_NAME = "KIYOSHIMA.json"
 MANIFEST_NAME = "MANIFEST.sha256"
 CANONICAL_ID = "Kiyoshima-Source-1.0"
 SPDX_REF = "LicenseRef-Kiyoshima-Source-1.0"
-SUPPORTED_PASSPORT_SCHEMAS = {"1.0", "1.1", "1.2"}
-CURRENT_PASSPORT_SCHEMA = "1.2"
+SUPPORTED_PASSPORT_SCHEMAS = {"1.0", "1.1", "1.2", "1.3"}
+CURRENT_PASSPORT_SCHEMA = "1.3"
+GENERATED_OPEN_LICENSES = {"MIT", "Apache-2.0", "MIT OR Apache-2.0"}
 ALLOWED_PERMISSION_STATES = {
     "allowed",
     "allowed-with-conditions",
@@ -73,10 +76,24 @@ def has_placeholder(value) -> bool:
 
 
 def resolve_authoritative_file(passport_path: pathlib.Path, d: dict) -> pathlib.Path | None:
-    auth = d.get("license", {}).get("authoritative_file")
-    if not auth:
+    lic = d.get("license")
+    if not isinstance(lic, dict):
+        return None
+    auth = lic.get("authoritative_file")
+    if not isinstance(auth, str) or not auth:
         return None
     candidate = (passport_path.parent / auth).resolve()
+    try:
+        candidate.relative_to(passport_path.parent.resolve())
+    except ValueError:
+        return None
+    return candidate
+
+
+def resolve_declared_file(passport_path: pathlib.Path, rel) -> pathlib.Path | None:
+    if not isinstance(rel, str) or not rel:
+        return None
+    candidate = (passport_path.parent / rel).resolve()
     try:
         candidate.relative_to(passport_path.parent.resolve())
     except ValueError:
@@ -90,6 +107,9 @@ def validate_passport(path: pathlib.Path, require_current: bool = False) -> list
         d = load_json(path)
     except Exception as exc:
         return [f"cannot parse {path}: {exc}"]
+
+    if not isinstance(d, dict):
+        return ["Passport root must be a JSON object"]
 
     required = [
         "format",
@@ -114,38 +134,107 @@ def validate_passport(path: pathlib.Path, require_current: bool = False) -> list
     if require_current and schema != CURRENT_PASSPORT_SCHEMA:
         errors.append(f"passport schema must be {CURRENT_PASSPORT_SCHEMA} for this framework release")
 
-    if schema in {"1.1", "1.2"}:
+    if schema in {"1.1", "1.2", "1.3"}:
         for key in ["declaration_scope", "rights_reservations", "permission_requests"]:
             if key not in d:
                 errors.append(f"schema {schema} requires field: {key}")
         if d.get("declaration_scope") not in {"covered-software", "framework-canonical-license"}:
             errors.append("invalid declaration_scope")
-    if schema == "1.2":
+    if schema in {"1.2", "1.3"}:
         for key in ["protocol", "policy_constraints"]:
             if key not in d:
-                errors.append(f"schema 1.2 requires field: {key}")
-        proto = d.get("protocol", {})
+                errors.append(f"schema {schema} requires field: {key}")
+        proto = d.get("protocol")
+        if not isinstance(proto, dict):
+            errors.append(f"schema {schema} requires protocol to be an object")
+            proto = {}
         if proto.get("name") != "Kiyoshima License Passport Protocol" or proto.get("version") != "1.0":
-            errors.append("schema 1.2 requires Kiyoshima License Passport Protocol version 1.0")
+            errors.append(f"schema {schema} requires Kiyoshima License Passport Protocol version 1.0")
         if proto.get("semantics") != "fail-closed-informational":
             errors.append("protocol.semantics must be fail-closed-informational")
-        constraints = d.get("policy_constraints", {})
+
+    constraints = d.get("policy_constraints")
+    if not isinstance(constraints, dict):
+        if schema in {"1.2", "1.3"}:
+            errors.append(f"schema {schema} requires policy_constraints to be an object")
+        constraints = {}
+
+    if schema == "1.2":
         if constraints.get("downstream_rights") != "direct-from-licensor-not-sublicensed":
             errors.append("policy_constraints.downstream_rights must be direct-from-licensor-not-sublicensed")
 
-    lic = d.get("license", {})
+    source_semantics = schema == "1.3" and (
+        d.get("profile") == "source" or d.get("declaration_scope") == "framework-canonical-license"
+    )
+    if source_semantics:
+        required_source_constraints = {
+            "organization_evaluation_days": 30,
+            "organization_evaluation_nonproduction_only": True,
+            "distribution_attribution_required": True,
+            "modified_portions_source_required": True,
+            "downstream_rights": "direct-from-licensor-not-sublicensed",
+            "operational_ai_provider_must_not_acquire_reserved_rights": True,
+        }
+        for key, expected in required_source_constraints.items():
+            if constraints.get(key) != expected:
+                errors.append(f"source policy_constraints.{key} must equal {expected!r}")
+
+    lic = d.get("license")
+    if not isinstance(lic, dict):
+        errors.append("license must be an object")
+        lic = {}
+
+    if source_semantics:
+        expected_source_identity = {
+            "canonical_id": CANONICAL_ID,
+            "spdx_expression": SPDX_REF,
+            "version": "1.0",
+        }
+        for key, expected in expected_source_identity.items():
+            if lic.get(key) != expected:
+                errors.append(f"source license.{key} must equal {expected!r}")
+
     auth = resolve_authoritative_file(path, d)
     expected_hash = lic.get("sha256")
     if not auth:
         errors.append("license.authoritative_file is missing or escapes the project root")
     elif not auth.exists():
         errors.append(f"authoritative license file does not exist: {auth}")
+    elif not auth.is_file():
+        errors.append(f"authoritative license path is not a file: {auth}")
     elif expected_hash:
         actual_hash = sha256_file(auth)
         if actual_hash.lower() != str(expected_hash).lower():
             errors.append(f"authoritative license hash mismatch: expected {expected_hash}, actual {actual_hash}")
     else:
         errors.append("license.sha256 is required")
+
+    supporting_files = lic.get("supporting_files", [])
+    if not isinstance(supporting_files, list):
+        errors.append("license.supporting_files must be an array")
+        supporting_files = []
+    for i, item in enumerate(supporting_files):
+        if not isinstance(item, dict):
+            errors.append(f"license.supporting_files[{i}] must be an object")
+            continue
+        rel = item.get("path")
+        expected = item.get("sha256")
+        supporting = resolve_declared_file(path, rel)
+        if not supporting:
+            errors.append(f"license.supporting_files[{i}].path is missing or escapes the project root")
+            continue
+        if not supporting.exists():
+            errors.append(f"declared supporting license file does not exist: {supporting}")
+            continue
+        if not supporting.is_file():
+            errors.append(f"declared supporting license path is not a file: {supporting}")
+            continue
+        if not expected:
+            errors.append(f"license.supporting_files[{i}].sha256 is required")
+            continue
+        actual = sha256_file(supporting)
+        if actual.lower() != str(expected).lower():
+            errors.append(f"supporting license hash mismatch for {rel}: expected {expected}, actual {actual}")
 
     if lic.get("canonical_id") == CANONICAL_ID and expected_hash and CANONICAL.exists():
         canonical_hash = sha256_file(CANONICAL)
@@ -154,19 +243,25 @@ def validate_passport(path: pathlib.Path, require_current: bool = False) -> list
                 f"passport claims {CANONICAL_ID} but digest does not match this framework's canonical candidate: {canonical_hash}"
             )
 
-    for section in ["permissions"]:
-        for key, value in d.get(section, {}).items():
-            if value not in ALLOWED_PERMISSION_STATES:
-                errors.append(f"{section}.{key} has unknown state: {value!r}")
+    permissions = d.get("permissions")
+    if not isinstance(permissions, dict):
+        errors.append("permissions must be an object")
+        permissions = {}
+    for key, value in permissions.items():
+        if value not in ALLOWED_PERMISSION_STATES:
+            errors.append(f"permissions.{key} has unknown state: {value!r}")
 
-    auto = d.get("automation", {})
+    auto = d.get("automation")
+    if not isinstance(auto, dict):
+        errors.append("automation must be an object")
+        auto = {}
     invariants = {
         "conflict_policy": "deny-on-conflict",
         "missing_field_policy": "do-not-infer-rights",
         "machine_metadata_authority": "informational",
         "additional_permissions_require_authenticated_grant": True,
     }
-    if schema in {"1.1", "1.2"}:
+    if schema in {"1.1", "1.2", "1.3"}:
         invariants["unknown_value_policy"] = "do-not-infer-rights"
     for key, expected in invariants.items():
         if auto.get(key) != expected:
@@ -435,46 +530,152 @@ def safe_write_text(path: pathlib.Path, text: str, force: bool):
     safe_write(path, text.encode("utf-8"), force)
 
 
+def render_mit_license(year: str, holder: str) -> bytes:
+    text = MIT_TEMPLATE.read_text(encoding="utf-8")
+    text = text.replace("[year]", year).replace("[copyright holder]", holder)
+    return text.encode("utf-8")
+
+
+def render_open_license(expression: str, year: str, holder: str):
+    if expression not in GENERATED_OPEN_LICENSES:
+        raise ValueError(f"unsupported generated Open license expression: {expression}")
+    mit = render_mit_license(year, holder)
+    apache = APACHE.read_bytes()
+    if expression == "MIT":
+        return mit, {"MIT": mit}, {}
+    if expression == "Apache-2.0":
+        return apache, {"Apache-2.0": apache}, {}
+
+    header = (
+        "Kiyoshima Open Profile — Dual-License Notice\n\n"
+        "You may use this project under your choice of either the MIT License or the "
+        "Apache License, Version 2.0.\n\n"
+        "SPDX-License-Identifier: MIT OR Apache-2.0\n\n"
+        "The Kiyoshima Open profile and KIYOSHIMA.json are metadata/tooling conventions. "
+        "They do not modify either license.\n\n"
+        "===== MIT License =====\n\n"
+    ).encode("utf-8")
+    middle = b"\n===== Apache License 2.0 =====\n\n"
+    combined = header + mit + middle + apache
+    side_files = {"LICENSE-MIT": mit, "LICENSE-APACHE": apache}
+    return combined, {"MIT": mit, "Apache-2.0": apache}, side_files
+
+
+def open_license_display_name(expression: str) -> str:
+    return {
+        "MIT": "MIT License",
+        "Apache-2.0": "Apache License 2.0",
+        "MIT OR Apache-2.0": "MIT License OR Apache License 2.0",
+    }[expression]
+
+
 def cmd_init_project(args):
     base = pathlib.Path(args.path).resolve()
     base.mkdir(parents=True, exist_ok=True)
-    if args.profile != "source":
-        print("ERROR: init-project currently generates the Source profile; Open profile uses standard ecosystem licenses and should be configured natively.", file=sys.stderr)
-        return 2
-    template = load_json(ROOT / "templates" / "project" / PASSPORT_NAME)
-    template["project"].update({
-        "name": args.name,
-        "kind": args.kind,
-        "repository": args.repository,
-        "copyright_holder": args.holder,
-        "contact": args.contact,
-    })
-    template["permission_requests"]["general"] = args.contact
-    template["permission_requests"]["commercial"] = args.commercial_contact or args.contact
-    template["permission_requests"]["ai"] = args.ai_contact or args.contact
-    template["permission_requests"]["evaluation"] = args.evaluation_contact or args.commercial_contact or args.contact
-    template["license"]["sha256"] = sha256_file(CANONICAL)
-    template["provenance"]["legal_text_digest"] = sha256_file(CANONICAL)
-
     year = str(datetime.now(timezone.utc).year)
-    notice = (ROOT / "templates" / "project" / "NOTICE.template").read_text(encoding="utf-8")
-    notice = notice.replace("[project name]", args.name)
-    notice = notice.replace("[year]", year)
-    notice = notice.replace("[copyright holder]", args.holder)
-    notice = notice.replace("[repository URL]", args.repository)
-    notice = notice.replace("[contact URL or email]", args.contact)
-    reuse = (ROOT / "templates" / "project" / "REUSE.toml").read_text(encoding="utf-8")
-    reuse = reuse.replace("REPLACE_WITH_COPYRIGHT_NOTICE", f"{year} {args.holder}")
-    readme_snippet = (ROOT / "templates" / "project" / "README-LICENSING.md").read_text(encoding="utf-8")
+    outputs = {}
 
-    outputs = {
-        base / "LICENSE": CANONICAL.read_bytes(),
-        base / "LICENSES" / f"{SPDX_REF}.txt": CANONICAL.read_bytes(),
-        base / PASSPORT_NAME: (json.dumps(template, indent=2, ensure_ascii=False) + "\n").encode("utf-8"),
-        base / "NOTICE": notice.encode("utf-8"),
-        base / "REUSE.toml": reuse.encode("utf-8"),
-        base / "README-LICENSING.md": readme_snippet.encode("utf-8"),
-    }
+    if args.profile == "source":
+        if not args.contact:
+            print("ERROR: --contact is required for the Source profile", file=sys.stderr)
+            return 2
+        template = load_json(ROOT / "templates" / "project" / PASSPORT_NAME)
+        template["project"].update({
+            "name": args.name,
+            "kind": args.kind,
+            "repository": args.repository,
+            "copyright_holder": args.holder,
+            "contact": args.contact,
+        })
+        template["permission_requests"]["general"] = args.contact
+        template["permission_requests"]["commercial"] = args.commercial_contact or args.contact
+        template["permission_requests"]["ai"] = args.ai_contact or args.contact
+        template["permission_requests"]["evaluation"] = args.evaluation_contact or args.commercial_contact or args.contact
+        digest = sha256_file(CANONICAL)
+        template["license"]["sha256"] = digest
+        template["license"]["supporting_files"] = [{
+            "path": f"LICENSES/{SPDX_REF}.txt",
+            "spdx_id": SPDX_REF,
+            "sha256": digest,
+        }]
+        template["provenance"]["legal_text_digest"] = digest
+
+        notice = (ROOT / "templates" / "project" / "NOTICE.template").read_text(encoding="utf-8")
+        notice = notice.replace("[project name]", args.name)
+        notice = notice.replace("[year]", year)
+        notice = notice.replace("[copyright holder]", args.holder)
+        notice = notice.replace("[repository URL]", args.repository)
+        notice = notice.replace("[contact URL or email]", args.contact)
+        reuse = (ROOT / "templates" / "project" / "REUSE.toml").read_text(encoding="utf-8")
+        reuse = reuse.replace("REPLACE_WITH_COPYRIGHT_NOTICE", f"{year} {args.holder}")
+        readme_snippet = (ROOT / "templates" / "project" / "README-LICENSING.md").read_text(encoding="utf-8")
+
+        outputs = {
+            base / "LICENSE": CANONICAL.read_bytes(),
+            base / "LICENSES" / f"{SPDX_REF}.txt": CANONICAL.read_bytes(),
+            base / PASSPORT_NAME: (json.dumps(template, indent=2, ensure_ascii=False) + "\n").encode("utf-8"),
+            base / "NOTICE": notice.encode("utf-8"),
+            base / "REUSE.toml": reuse.encode("utf-8"),
+            base / "README-LICENSING.md": readme_snippet.encode("utf-8"),
+        }
+    elif args.profile == "open":
+        expression = args.open_license
+        root_license, reuse_licenses, side_files = render_open_license(expression, year, args.holder)
+        template = load_json(ROOT / "templates" / "project" / "KIYOSHIMA-OPEN.json")
+        contact = args.contact or args.repository
+        template["project"].update({
+            "name": args.name,
+            "kind": args.kind,
+            "repository": args.repository,
+            "copyright_holder": args.holder,
+            "contact": contact,
+        })
+        template["license"].update({
+            "name": open_license_display_name(expression),
+            "spdx_expression": expression,
+            "sha256": hashlib.sha256(root_license).hexdigest(),
+        })
+        template["license"]["supporting_files"] = [
+            {
+                "path": f"LICENSES/{spdx_id}.txt",
+                "spdx_id": spdx_id,
+                "sha256": hashlib.sha256(data).hexdigest(),
+            }
+            for spdx_id, data in reuse_licenses.items()
+        ]
+        template["permission_requests"]["general"] = contact
+        template["provenance"]["legal_text_digest"] = hashlib.sha256(root_license).hexdigest()
+        template["policy_constraints"]["open_profile_spdx_expression"] = expression
+
+        notice = (ROOT / "templates" / "project" / "NOTICE-OPEN.template").read_text(encoding="utf-8")
+        for old, new in {
+            "[project name]": args.name,
+            "[year]": year,
+            "[copyright holder]": args.holder,
+            "[repository URL]": args.repository,
+            "[SPDX expression]": expression,
+        }.items():
+            notice = notice.replace(old, new)
+        reuse = (ROOT / "templates" / "project" / "REUSE-OPEN.toml").read_text(encoding="utf-8")
+        reuse = reuse.replace("REPLACE_WITH_COPYRIGHT_NOTICE", f"{year} {args.holder}")
+        reuse = reuse.replace("REPLACE_WITH_SPDX_EXPRESSION", expression)
+        readme_snippet = (ROOT / "templates" / "project" / "README-LICENSING-OPEN.md").read_text(encoding="utf-8")
+        readme_snippet = readme_snippet.replace("REPLACE_WITH_SPDX_EXPRESSION", expression)
+
+        outputs = {
+            base / "LICENSE": root_license,
+            base / PASSPORT_NAME: (json.dumps(template, indent=2, ensure_ascii=False) + "\n").encode("utf-8"),
+            base / "NOTICE": notice.encode("utf-8"),
+            base / "REUSE.toml": reuse.encode("utf-8"),
+            base / "README-LICENSING.md": readme_snippet.encode("utf-8"),
+        }
+        for spdx_id, data in reuse_licenses.items():
+            outputs[base / "LICENSES" / f"{spdx_id}.txt"] = data
+        for name, data in side_files.items():
+            outputs[base / name] = data
+    else:
+        print(f"ERROR: init-project does not generate profile {args.profile!r}", file=sys.stderr)
+        return 2
     conflicts = [str(p) for p in outputs if p.exists() and not args.force]
     if conflicts:
         print("ERROR: refusing to overwrite existing files:", file=sys.stderr)
@@ -489,7 +690,7 @@ def cmd_init_project(args):
         return 0
     for p, data in outputs.items():
         safe_write(p, data, args.force)
-    print(f"initialized Kiyoshima Source profile in {base}")
+    print(f"initialized Kiyoshima {args.profile.capitalize()} profile in {base}")
     print("Next: merge README-LICENSING.md into your README, then run verify-project.")
     return 0
 
@@ -524,6 +725,11 @@ def cmd_sync_project(args):
         synced["permission_requests"][key] = current.get("permission_requests", {}).get(key) or contact
     digest = sha256_file(CANONICAL)
     synced["license"]["sha256"] = digest
+    synced["license"]["supporting_files"] = [{
+        "path": f"LICENSES/{SPDX_REF}.txt",
+        "spdx_id": SPDX_REF,
+        "sha256": digest,
+    }]
     synced["provenance"]["legal_text_digest"] = digest
 
     notice_path = base / "NOTICE"
@@ -579,21 +785,57 @@ def cmd_upgrade_passport(args):
     if old == CURRENT_PASSPORT_SCHEMA:
         print(f"already schema {CURRENT_PASSPORT_SCHEMA}: {path}")
         return 0
-    if old not in {"1.0", "1.1"}:
-        print(f"ERROR: only schema 1.0/1.1 -> {CURRENT_PASSPORT_SCHEMA} upgrade is supported, got {old!r}", file=sys.stderr)
+    if old not in {"1.0", "1.1", "1.2"}:
+        print(f"ERROR: only schema 1.0/1.1/1.2 -> {CURRENT_PASSPORT_SCHEMA} upgrade is supported, got {old!r}", file=sys.stderr)
         return 2
-    template = load_json(ROOT / "templates" / "project" / PASSPORT_NAME)
-    upgraded = template
-    upgraded["project"].update(d.get("project", {}))
-    upgraded["profile"] = d.get("profile", "source")
-    upgraded["license"].update(d.get("license", {}))
-    upgraded["license"]["sha256"] = sha256_file(CANONICAL)
-    upgraded["permissions"].update(d.get("permissions", {}))
-    upgraded["ai"].update(d.get("ai", {}))
-    upgraded["grants"] = d.get("grants", [])
-    contact = upgraded.get("project", {}).get("contact", "REPLACE_WITH_GENERAL_LICENSE_CONTACT")
-    for k in upgraded["permission_requests"]:
-        upgraded["permission_requests"][k] = contact
+
+    profile = d.get("profile", "source")
+    is_source = profile == "source" or d.get("license", {}).get("canonical_id") == CANONICAL_ID
+    if is_source:
+        upgraded = load_json(ROOT / "templates" / "project" / PASSPORT_NAME)
+        upgraded["project"].update(d.get("project", {}))
+        upgraded["profile"] = "source"
+        upgraded["permissions"].update(d.get("permissions", {}))
+        upgraded["ai"].update(d.get("ai", {}))
+        upgraded["grants"] = d.get("grants", [])
+        upgraded["rights_reservations"].update(d.get("rights_reservations", {}))
+        contact = upgraded.get("project", {}).get("contact") or d.get("permission_requests", {}).get("general")
+        if not contact or has_placeholder(contact):
+            print("ERROR: source Passport has no usable project.contact/general permission route", file=sys.stderr)
+            return 2
+        for key in upgraded["permission_requests"]:
+            upgraded["permission_requests"][key] = d.get("permission_requests", {}).get(key) or contact
+        digest = sha256_file(CANONICAL)
+        upgraded["license"]["sha256"] = digest
+        upgraded["license"]["supporting_files"] = [{
+            "path": f"LICENSES/{SPDX_REF}.txt",
+            "spdx_id": SPDX_REF,
+            "sha256": digest,
+        }]
+        upgraded["provenance"]["legal_text_digest"] = digest
+    else:
+        upgraded = dict(d)
+        upgraded["schema_version"] = CURRENT_PASSPORT_SCHEMA
+        upgraded.setdefault("declaration_scope", "covered-software")
+        upgraded.setdefault("rights_reservations", {})
+        upgraded.setdefault("permission_requests", {})
+        upgraded.setdefault("provenance", {})
+        upgraded.setdefault("grants", [])
+        upgraded.setdefault("policy_constraints", {})
+        upgraded["protocol"] = {
+            "name": "Kiyoshima License Passport Protocol",
+            "version": "1.0",
+            "semantics": "fail-closed-informational",
+            "canonical_repository": "https://github.com/moderubias/kiyoshima-licensing",
+        }
+        auto = upgraded.setdefault("automation", {})
+        auto.update({
+            "conflict_policy": "deny-on-conflict",
+            "missing_field_policy": "do-not-infer-rights",
+            "unknown_value_policy": "do-not-infer-rights",
+            "machine_metadata_authority": "informational",
+            "additional_permissions_require_authenticated_grant": True,
+        })
     if args.dry_run:
         print(json.dumps(upgraded, indent=2, ensure_ascii=False))
         return 0
@@ -688,7 +930,7 @@ def cmd_preflight(args):
         decision = "unknown"
     elif value in {"allowed", "allowed-within-principal-rights"}:
         decision = "allowed-within-declared-scope"
-    elif value == "allowed-with-conditions":
+    elif value in {"allowed-with-conditions", "allowed-within-license-scope", "no-additional-kiyoshima-restriction"}:
         decision = "allowed-with-conditions"
     elif value in {"agreement-required", "permission-required"}:
         decision = "permission-required"
@@ -707,7 +949,10 @@ def cmd_preflight(args):
         "constraints": d.get("policy_constraints", {}),
         "legal_authority": "informational-only-license-text-controls",
     }
-    if decision in {"allowed-with-conditions", "permission-required", "not-granted-by-public-license", "unknown"}:
+    needs_route = decision in {"permission-required", "not-granted-by-public-license", "unknown"}
+    if decision == "allowed-with-conditions" and d.get("profile") == "source" and args.action == "organization_evaluation":
+        needs_route = True
+    if needs_route:
         payload["permission_request"] = _request_route(d, args.action, section)
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
@@ -877,6 +1122,7 @@ def cmd_status(args):
         blockers.append(f"framework integrity has {len(errors)} issue(s)")
     payload = {
         "format": "Kiyoshima Operator Status",
+        "framework_version": FRAMEWORK_VERSION,
         "framework_root": str(ROOT),
         "license": {
             "canonical_id": CANONICAL_ID,
@@ -898,6 +1144,7 @@ def cmd_status(args):
         print(json.dumps(payload, indent=2, ensure_ascii=False))
         return 0 if not errors else 1
     print("Kiyoshima Licensing Framework status")
+    print(f"framework: {FRAMEWORK_VERSION}")
     print(f"license: {CANONICAL_ID} — {payload['license']['status']}")
     if payload['license']['candidate_revision']:
         print(f"candidate: {payload['license']['candidate_revision']}")
@@ -1078,11 +1325,18 @@ def register_entry(registry_path: pathlib.Path, entry: dict):
 
 
 def cmd_register_project(args):
+    license_id = args.license
+    if not license_id:
+        if args.profile == "source":
+            license_id = CANONICAL_ID
+        else:
+            print("ERROR: --license is required for open/commercial registry entries", file=sys.stderr)
+            return 2
     entry = {
         "name": args.name,
         "repository": args.repository,
         "profile": args.profile,
-        "license": args.license,
+        "license": license_id,
         "added_at": today_iso(),
     }
     register_entry(ROOT / "registry" / "projects.json", entry)
@@ -1153,6 +1407,7 @@ def cmd_new_grant(args):
 
 def main():
     p = argparse.ArgumentParser(prog="klicense", description="Kiyoshima Licensing Framework utility")
+    p.add_argument("--version", action="version", version=f"klicense {FRAMEWORK_VERSION} (Passport schema {CURRENT_PASSPORT_SCHEMA})")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     s = sub.add_parser("verify-framework", help="Verify canonical legal digest, repository licensing, registries, Passport, and manifest.")
@@ -1190,12 +1445,18 @@ def main():
 
     s = sub.add_parser("init-project")
     s.add_argument("path")
-    s.add_argument("--profile", choices=["source"], default="source")
+    s.add_argument("--profile", choices=["open", "source"], default="source")
+    s.add_argument(
+        "--open-license",
+        choices=sorted(GENERATED_OPEN_LICENSES),
+        default="Apache-2.0",
+        help="Controlling SPDX license expression generated for --profile open.",
+    )
     s.add_argument("--name", required=True)
     s.add_argument("--kind", default="application")
     s.add_argument("--repository", required=True)
     s.add_argument("--holder", required=True)
-    s.add_argument("--contact", required=True, help="General licensing contact or request URL.")
+    s.add_argument("--contact", help="General licensing contact or request URL. Required for Source; defaults to repository URL for Open.")
     s.add_argument("--commercial-contact", help="Optional dedicated commercial/organizational request URL.")
     s.add_argument("--ai-contact", help="Optional dedicated AI/model-training request URL.")
     s.add_argument("--evaluation-contact", help="Optional dedicated organization-evaluation extension URL.")
@@ -1208,7 +1469,7 @@ def main():
     s.add_argument("--dry-run", action="store_true")
     s.set_defaults(func=cmd_sync_project)
 
-    s = sub.add_parser("upgrade-passport", help="Upgrade a project Passport from schema 1.0/1.1 to 1.2 with a backup.")
+    s = sub.add_parser("upgrade-passport", help=f"Upgrade a project Passport from schema 1.0/1.1/1.2 to {CURRENT_PASSPORT_SCHEMA} with a backup.")
     s.add_argument("path")
     s.add_argument("--dry-run", action="store_true")
     s.add_argument("--force", action="store_true")
@@ -1262,7 +1523,7 @@ def main():
     s.add_argument("--name", required=True)
     s.add_argument("--repository", required=True)
     s.add_argument("--profile", choices=["open", "source", "commercial"], required=True)
-    s.add_argument("--license", default=CANONICAL_ID)
+    s.add_argument("--license", default=None, help="License/SPDX expression. Defaults to Kiyoshima Source only for --profile source.")
     s.set_defaults(func=cmd_register_project)
 
     s = sub.add_parser("register-adopter")
